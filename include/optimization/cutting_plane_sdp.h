@@ -17,9 +17,9 @@
 #include "heuristics.h"
 
 //int STEPS;
-extern int BOUNDARY_CALLS;
-extern double ORACLE_TIME;
-extern double REFLECTION_TIME;
+//extern int BOUNDARY_CALLS;
+//extern double ORACLE_TIME;
+//extern double REFLECTION_TIME;
 namespace optimization {
 
 
@@ -918,7 +918,7 @@ namespace optimization {
         bool tillConvergence = maxSteps == 0;
         unsigned int step = 0;
         int dim = objectiveFunction.dimension();
-        BOUNDARY_CALLS = ORACLE_TIME = REFLECTION_TIME = 0;
+//        BOUNDARY_CALLS = ORACLE_TIME = REFLECTION_TIME = 0;
 
         SlidingWindow slidingWindow(6 + sqrt(dim));
         SlidingWindow changeWindow(3 + 2*sqrt(dim)/3);

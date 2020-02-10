@@ -5,21 +5,21 @@
 #ifndef VOLESTI_SPECTRAHEDRON_H
 #define VOLESTI_SPECTRAHEDRON_H
 
-#include "Eigen"
-#include <Spectra/SymGEigsSolver.h>
-#include <Spectra/MatOp/DenseSymMatProd.h>
-#include <Spectra/MatOp/SparseCholesky.h>
+//#include "Eigen"
+#include "../../Spectra/SymGEigsSolver.h"
+#include "../../Spectra/MatOp/DenseSymMatProd.h"
+#include "../../Spectra/MatOp/SparseCholesky.h"
 #include <vector>
-#include <Eigen/Eigen>
+//#include <Eigen/Eigen>
 #include <chrono>
 #include <limits>
-#include <optimization/SpectraLU.h>
+#include "optimization/SpectraLU.h"
 #include "SpectraLU.h"
 
-const double ZERO = 0.0000000001;
-double ORACLE_TIME;
-double REFLECTION_TIME;
-int BOUNDARY_CALLS;
+//const double ZERO = 0.0000000001;
+//double ORACLE_TIME;
+//double REFLECTION_TIME;
+//int BOUNDARY_CALLS;
 
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> MT;
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MT_ROWMAJOR;
@@ -455,7 +455,7 @@ public:
         lmi.evaluate(position, A);
         MT B;
         lmi.evaluateWithoutA0(-1 * direction, B);
-        BOUNDARY_CALLS++;
+//        BOUNDARY_CALLS++;
         // Construct matrix operation object using the wrapper classes
         Spectra::DenseSymMatProd<double> op(B);
         Spectra::DenseCholesky<double> Bop(-A);
@@ -512,7 +512,7 @@ public:
         lmi.evaluateWithoutA0(-1 * direction, B);
 
         Eigen::GeneralizedEigenSolver<MT> ges(A, B);
-        BOUNDARY_CALLS++;
+//        BOUNDARY_CALLS++;
         Eigen::GeneralizedEigenSolver<MT>::ComplexVectorType alphas = ges.alphas();
         VT betas = ges.betas();
 
@@ -603,7 +603,7 @@ public:
     boundaryOracleCDHR(const VT &position, const int& coordinate, const VT &a, const double &b,
                            BoundaryOracleCDHRSettings<Point> &settings) {
 
-        ORACLE_TIME++;
+//        ORACLE_TIME++;
         if (settings.first) {
             lmi.evaluate_revised(position, settings.LMIatP);
         }
@@ -712,7 +712,7 @@ public:
             lmi.evaluateWithoutA0_revised(a, settings.Obj);
         }
 
-        BOUNDARY_CALLS++;
+//        BOUNDARY_CALLS++;
 
         if (settings.computeB)
             lmi.evaluateWithoutA0_revised(direction, settings.B);
@@ -733,7 +733,7 @@ public:
                 Spectra::DenseCholesky<double> Bop(-settings.LMIatP - lambda * settings.B);
 
                 if (Bop.info() == Spectra::SUCCESSFUL) {
-                    REFLECTION_TIME++;
+//                    REFLECTION_TIME++;
                     settings.setMaxSegmentLength(lambdaMinPositive);
                     return {lambdaMinPositive, hitCuttingPlane};
                 }
@@ -823,7 +823,7 @@ public:
         const VT &position = _position.getCoefficients();
         const VT &direction = _direction.getCoefficients();
         const VT &objectiveFunction = _objectiveFunction.getCoefficients();
-        BOUNDARY_CALLS++;
+//        BOUNDARY_CALLS++;
         unsigned int matrixDim = lmi.getMatricesDim();
         if (!lmi.isNegativeSemidefinite(position)) throw "out\n";
 //            std::cout << objectiveFunction << "\n";

@@ -14,9 +14,9 @@
 #include "spectrahedron.h"
 #include <cmath>
 
-extern int BOUNDARY_CALLS;
-extern double ORACLE_TIME;
-extern double REFLECTION_TIME;
+//extern int BOUNDARY_CALLS;
+//extern double ORACLE_TIME;
+//extern double REFLECTION_TIME;
 
 typedef double NT_MATRIX;
 typedef Eigen::Matrix<NT_MATRIX,Eigen::Dynamic,Eigen::Dynamic> MT;
