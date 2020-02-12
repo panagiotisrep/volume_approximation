@@ -167,9 +167,6 @@ namespace optimization {
                     sol = cutting_plane_method_sampled_covariance_matrix(polytope, objectiveFunction, parameters, error, maxSteps,
                                                                          initial);
                     break;
-                case DETERMINISTIC_CUTTING_PLANE_CHEBYSHEV_CENTER:
-                    sol = cutting_plane_method_deterministic_Chebyshev(polytope, objectiveFunction, parameters, error, maxSteps, initial);
-                    break;
                 case SIMULATED_ANNEALING:
                     obj = Point(objectiveFunction);
                     sol = simulated_annealing(polytope, obj, parameters, error, maxSteps, initial);
@@ -244,6 +241,29 @@ namespace optimization {
         }
 
         void saveToFile(std::ofstream& os) {
+            if (goal == minimize)
+                os << "Minimize\n";
+            else
+                os << "Maximize\n";
+
+            for (int i=0 ; i<objectiveFunction.rows() ; i++)
+                os << objectiveFunction(i) << " ";
+
+            os << "\nSubject to\n";
+
+            MT A = polytope.get_mat();
+            VT b = polytope.get_vec();
+
+            for (int i=0 ; i<A.rows() ; i++) {
+                for (int j=0 ; j<A.cols() ; j++)
+                    os << A(i, j) << " ";
+
+                os << b(i) << "\n";
+            }
+
+        }
+
+        void saveToFile(std::ostream& os) {
             if (goal == minimize)
                 os << "Minimize\n";
             else

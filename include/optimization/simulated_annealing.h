@@ -9,6 +9,7 @@
 #include "samplers.h"
 #include "heuristics.h"
 #include "Eigen"
+#include "optimization_misc.h"
 
 namespace optimization {
 
@@ -463,27 +464,7 @@ namespace optimization {
         return {minPoint, minPoint.dot(objectiveFunction)};
     }
 
-    template<class Point>
-    void getArithmeticMean(std::vector<Point> points, Point& mean) {
-        int dim = points[0].dimension();
-        mean = Point(dim);
 
-        for (auto p : points)
-            mean = mean + p;
-
-        mean = mean / points.size();
-    }
-
-    template<class Point>
-    void getArithmeticMean(std::list<Point> points, Point& mean) {
-        int dim = points.front().dimension();
-        mean = Point(dim);
-
-        for (auto p : points)
-            mean = mean + p;
-
-        mean = mean / points.size();
-    }
 
     //the covariance matrix is computed by the intermediate points of the random walk
     template<class Parameters, class Point, typename NT>

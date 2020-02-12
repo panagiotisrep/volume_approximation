@@ -13,6 +13,7 @@
 #include "spectrahedron.h"
 #include "samplers.h"
 #include "Eigen"
+#include "optimization_misc.h"
 
 namespace optimization {
 

@@ -8,7 +8,7 @@
 #include "lp_problem.h"
 #include "polytope_generators.h"
 #include "polytopes.h"
-#include "Eigen"
+//#include "Eigen"
 #include <cstdlib>
 
 template<class Point, typename NT>

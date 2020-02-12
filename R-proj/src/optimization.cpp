@@ -6,7 +6,7 @@
 #include <boost/random/uniform_real_distribution.hpp>
 #include <chrono>
 #include "truncated_exponential.h"
-#include "lp_problem.h"
+#include "lp_generator.h"
 #include "sdp_problem.h"
 #include "cartesian_geom/cartesian_kernel.h"
 #include "vars.h"
@@ -445,3 +445,28 @@ Rcpp::NumericMatrix sample_spectrahedron(Rcpp::Nullable<Rcpp::Reference> S = R_N
     return PointSet;
 }
 
+//' @export
+// [[Rcpp::export]]
+void generator_lp(Rcpp::Nullable<int> nn = R_NilValue,
+                  Rcpp::Nullable<int> mm = R_NilValue) {
+
+    typedef double NT;
+    typedef Cartesian<NT> Kernel;
+    typedef typename Kernel::Point Point;
+    typedef optimization::lp_problem<Point, NT> lp_problem;
+    typedef boost::mt19937 RNGType;
+    lp_problem lp;
+
+    lp = generate_lp<Point, NT, RNGType>(Rcpp::as<int>(nn), Rcpp::as<int>(mm));
+
+
+
+    std::filebuf fb;
+    std::string bar = "_";
+    std::string txt = ".txt";
+    fb.open("lp_prob" + bar + std::to_string(Rcpp::as<int>(nn)) + bar + std::to_string(Rcpp::as<int>(mm)) + txt, std::ios::out);
+    std::ostream os(&fb);
+    lp.saveToFile(os);
+
+    return;
+}

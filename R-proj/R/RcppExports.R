@@ -133,6 +133,76 @@ exact_vol <- function(P = NULL, body = NULL, Parameters = NULL) {
     .Call(`_volesti_exact_vol`, P, body, Parameters)
 }
 
+#' The function for linear proramming, i.e.
+#'
+#' min \eqn{cx}
+#' s.t. \eqn{Ax\leq b}
+#'
+#' There are two available algorithms, the randomized cutting plane and the simulated annealing. The constraints of the linear program describe an H-polytope with \eqn{m} facets.
+#'
+#' @param P. An object from class Hpolytope.
+#' @param objectiveFunction. A numerical vector with the coefficients of the objective function.
+#' @param algorithm Optional. A string specifying which algorithm to use:
+#' \itemize{
+#' \item{\code{'RCP'} }{The randomized cutting plane method}
+#' \item{\code{'RCPS'} }{The randomized cutting plane method with the implicit isotropization heuristic}
+#' \item{\code{'SA'} }{The simulated annealing algorithm}
+#' }
+#' @param randomWalk Optional. A string specifying which random walk to use to use:
+#' \itemize{
+#' \item{\code{'BW'} }{The billiard walk, available only for \code{RCP}}
+#' \item{\code{'CDHR'} }{Hit & Run with coordinate directions, available only for \code{RCP}}
+#' \item{\code{'RDHR'} }{Hit & Run with random directions, available for \code{RCP}, \code{RCPS}, \code{SA}}
+#' }
+#' @param numMaxSteps Optional. The maximum number of iterations of the algorithm.
+#' @param pointsNum Optional. The number of points to sample per iteration.
+#' @param error Optional. Declare the upper bound for the approximation error. The default value is \eqn{0.000001}.
+#'
+#'
+#' @return A list with the minimum value and the values of x.
+#' @examples
+#' # calling RCP algorithm for a H-polytope (10d unit simplex)
+#' P = volesti::GenSimplex(10, "H")
+#' obj = c(1.80429, -8.46931, -1.68169, -1.71464, -1.95775, -4.24238, -7.19885, -1.64979, -5.9658, -1.189649)
+#' volesti::lp_optimization(P, obj, algorithm = "SA", pointsNum=500)
+#' @export
+lp_optimization <- function(P, objectiveFunction, algorithm = NULL, randomWalk = NULL, numMaxSteps = NULL, pointsNum = NULL, error = NULL) {
+    .Call(`_volesti_lp_optimization`, P, objectiveFunction, algorithm, randomWalk, numMaxSteps, pointsNum, error)
+}
+
+#' The function for semidefinite proramming, i.e.
+#'
+#' There are two available algorithms, the randomized cutting plane and the simulated annealing.
+#'
+#' @param S. An object from class Spectrahedron.
+#' @param objectiveFunction. A numerical vector with the coefficients of the objective function.
+#' @param algorithm Optional. A string specifying which algorithm to use:
+#' \itemize{
+#' \item{\code{'RCP'} }{The randomized cutting plane method}
+#' \item{\code{'RCPS'} }{The randomized cutting plane method with the implicit isotropisation heuristic}
+#' \item{\code{'SA'} }{The simulated annealing algorithm}
+#' }
+#' @param numMaxSteps Optional. The maximum number of iterations of the algorithm.
+#' @param pointsNum Optional. The number of points to sample per iteration.
+#' @param error Optional. Declare the upper bound for the approximation error. The default value is \eqn{0.000001}.
+#'
+#'
+#' @return A list with the minimum value and the values of x.
+#' @export
+sdp_optimization <- function(S, objectiveFunction, algorithm = NULL, numMaxSteps = NULL, pointsNum = NULL, error = NULL) {
+    .Call(`_volesti_sdp_optimization`, S, objectiveFunction, algorithm, numMaxSteps, pointsNum, error)
+}
+
+#' @export
+sample_spectrahedron <- function(S = NULL, N = NULL, walk_step = NULL) {
+    .Call(`_volesti_sample_spectrahedron`, S, N, walk_step)
+}
+
+#' @export
+generator_lp <- function(nn = NULL, mm = NULL) {
+    invisible(.Call(`_volesti_generator_lp`, nn, mm))
+}
+
 #' An internal Rccp function as a polytope generator
 #'
 #' @param kind_gen An integer to declare the type of the polytope.
