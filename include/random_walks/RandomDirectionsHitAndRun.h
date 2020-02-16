@@ -20,12 +20,15 @@ template<class Point, typename RNGType>
 class RandomDirectionsHitAndRun : public RandomWalk<Point,  RNGType> {
 public:
 
-    void sample(ConvexBody<Point, typename Point::FT> &convexBody, Point &point, const int numOfPoints, std::list <Point> &points,
-                RandomWalkSettings<Point, RNGType>& settings) override {
+    RandomDirectionsHitAndRun(RandomWalkSettings<Point, RNGType> &settings) : RandomWalk<Point,  RNGType>(settings) {
+        this->settings.Av.setZero(settings.dim);
+        this->settings.lamdas.setZero(settings.dim);
+    }
 
+    void sample(ConvexBody<Point, typename Point::FT> &convexBody, Point &point, const int numOfPoints, std::list<Point> &points) override {
         typedef typename Point::FT NT;
         unsigned int n = convexBody.dimension();
-        RNGType &rng = settings.rng;
+        RNGType &rng = this->settings.rng;
 
         boost::random::uniform_real_distribution<> urdist(0, 1);
         boost::random::uniform_int_distribution<> uidist(0, n - 1);
@@ -35,15 +38,15 @@ public:
         Point p_prev = point, p1(n), p2(n), v(n);
 
         v = get_direction<RNGType, Point, NT>(n);
-        std::pair<NT, NT> bpair = convexBody.vline_intersect(point, v, settings.lamdas, settings.Av);
+        std::pair<NT, NT> bpair = convexBody.vline_intersect(point, v, this->settings.lamdas, this->settings.Av);
         lambda = urdist(rng) * (bpair.first - bpair.second) + bpair.second;
         point += (lambda * v);
 
 
         for (unsigned int i = 1; i <= numOfPoints; ++i) {
-            for (unsigned int j = 0; j < settings.walk_len; ++j) {
+            for (unsigned int j = 0; j < this->settings.walk_len; ++j) {
                 v = get_direction<RNGType, Point, NT>(n);
-                std::pair <NT, NT> bpair = convexBody.vline_intersect(point, v, settings.lamdas, settings.Av, lambda);
+                std::pair <NT, NT> bpair = convexBody.vline_intersect(point, v, this->settings.lamdas, this->settings.Av, lambda);
                 lambda = urdist(rng) * (bpair.first - bpair.second) + bpair.second;
                 point = (lambda * v) + point;
             }

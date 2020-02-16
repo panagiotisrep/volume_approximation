@@ -310,13 +310,13 @@ Rcpp::NumericMatrix sample_points(Rcpp::Nullable<Rcpp::Reference> P = R_NilValue
         switch (type) {
             case 1: {
                 if (rdhr) {
-                    RandomWalkSettings<Point, RNGType> RandomWalkSettings(dim, walkL, rng);
-                    RandomDirectionsHitAndRun<Point, RNGType> randomDirectionsHitAndRun;
                     Point p = MeanPoint;
                     Point q = get_point_on_Dsphere<RNGType, Point>(dim, InnerBall.second);
                     p=p+q;
-                    std::cout << "ok\n";
-                    randomDirectionsHitAndRun.sample(HP, p, numpoints, randPoints, RandomWalkSettings);
+
+                    RandomWalkSettings<Point, RNGType> randomWalkSettings(dim, walkL, rng);
+                    RandomDirectionsHitAndRun<Point, RNGType> randomDirectionsHitAndRun(randomWalkSettings);
+                    randomDirectionsHitAndRun.sample(HP, p, numpoints, randPoints);
 
                 } else {
                     sampling_only<Point>(randPoints, HP, walkL, numpoints, gaussian,

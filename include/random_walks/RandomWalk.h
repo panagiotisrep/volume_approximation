@@ -5,13 +5,16 @@
 #ifndef VOLESTI_RANDOMWALK_H
 #define VOLESTI_RANDOMWALK_H
 
-//#include "RandomWalkSettings.h"
+#include "RandomWalkSettings.h"
 
 template<class Point, typename RNGType>
 class RandomWalk {
 public:
+    RandomWalkSettings<Point, RNGType>& settings;
+
     virtual ~RandomWalk(){}
-    virtual void sample(ConvexBody<Point, typename Point::FT>&, Point&, const int, std::list<Point>&, RandomWalkSettings<Point, RNGType>&) = 0;
+    RandomWalk(RandomWalkSettings<Point, RNGType>& settings) : settings(settings) {};
+    virtual void sample(ConvexBody<Point, typename Point::FT>&, Point&, const int, std::list<Point>&) = 0;
 };
 
 #endif //VOLESTI_RANDOMWALK_H

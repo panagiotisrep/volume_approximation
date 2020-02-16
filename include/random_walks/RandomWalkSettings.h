@@ -11,15 +11,14 @@ public:
     typedef typename Point::FT NT;
     typedef typename HPolytope<Point>::VT VT;
 
-    int walk_len;
+    int walk_len, dim;
     RNGType rng;
     VT lamdas, Av;
 
-    RandomWalkSettings(const int n, const int walk_len, RNGType& rng) {
+    RandomWalkSettings(const int walk_len, const int dim, RNGType& rng) {
         this->walk_len = walk_len;
         this->rng = rng;
-        lamdas.setZero(n);
-        Av.setZero(n);
+        this->dim = dim;
     }
 };
 
