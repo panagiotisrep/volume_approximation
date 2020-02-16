@@ -14,13 +14,14 @@
 
 #include <iostream>
 #include "solve_lp.h"
+#include "ConvexBody.h"
 
 //min and max values for the Hit and Run functions
 
 
 // H-polytope class
 template <typename Point>
-class HPolytope{
+class HPolytope : public ConvexBody<Point, typename Point::FT>{
 public:
     typedef Point PolytopePoint;
     typedef typename Point::FT NT;
@@ -522,6 +523,8 @@ public:
     }
 
     void free_them_all() {}
+
+
 
 };
 

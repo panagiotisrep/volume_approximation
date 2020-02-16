@@ -24,7 +24,8 @@
 #include "sample_only.h"
 #include "simplex_samplers.h"
 #include "vpolyintersectvpoly.h"
-
+#include "RandomWalkSettings.h"
+#include "RandomDirectionsHitAndRun.h"
 
 //' Sample points from a convex Polytope (H-polytope, V-polytope or a zonotope) or use direct methods for uniform sampling from the unit or the canonical or an arbitrary \eqn{d}-dimensional simplex and the boundary or the interior of a \eqn{d}-dimensional hypersphere
 //'
@@ -308,8 +309,19 @@ Rcpp::NumericMatrix sample_points(Rcpp::Nullable<Rcpp::Reference> P = R_NilValue
 
         switch (type) {
             case 1: {
-                sampling_only<Point>(randPoints, HP, walkL, numpoints, gaussian,
-                                     a, MeanPoint, var1, var2);
+                if (rdhr) {
+                    RandomWalkSettings<Point, RNGType> RandomWalkSettings(dim, walkL, rng);
+                    RandomDirectionsHitAndRun<Point, RNGType> randomDirectionsHitAndRun;
+                    Point p = MeanPoint;
+                    Point q = get_point_on_Dsphere<RNGType, Point>(dim, InnerBall.second);
+                    p=p+q;
+                    std::cout << "ok\n";
+                    randomDirectionsHitAndRun.sample(HP, p, numpoints, randPoints, RandomWalkSettings);
+
+                } else {
+                    sampling_only<Point>(randPoints, HP, walkL, numpoints, gaussian,
+                                         a, MeanPoint, var1, var2);
+                }
                 break;
             }
             case 2: {
