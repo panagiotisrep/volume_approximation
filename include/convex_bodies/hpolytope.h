@@ -521,6 +521,111 @@ public:
 
     }
 
+    // return the minimum positive root of polynomials a_i*x^2 + b_i*x + c_i
+    // and for which i it happens
+    // if no real or positive root, returns - 1
+    std::pair<NT, int>  minPositiveRoots(const VT& a, const VT& b, const VT&c) {
+        // compute delta = b^2 -4*a*c
+        VT roots(A.rows());
+
+        NT* roots_data = roots.data();
+        const NT* b_data = b.data();
+        const NT* a_data = a.data();
+
+        for (int i = 0 ; i<A.rows() ; i++) {
+            *roots_data = *b_data * *b_data;
+            roots_data++;
+            b_data++;
+        }
+
+        roots -= 4* a.cwiseProduct(c);
+        roots_data = roots.data();
+        b_data = b.data();
+
+        NT minimum_positive = NT(maxNT);
+        int at_i = -1;
+
+        for (int i=0; i<a.rows(); i++) {
+            NT x_min = -1;
+
+            if (*roots_data < 0) {
+                roots_data++;
+                a_data++;
+                b_data++;
+                continue;
+            }
+
+            if (*a_data != 0) {
+                NT sqrt_delta = std::sqrt(*roots_data);
+
+                if (*a_data > 0)
+                    x_min = (- *b_data + sqrt_delta) / (2 * *a_data);
+                else
+                    x_min = (- *b_data - sqrt_delta) / (2 * *a_data);
+            }
+            else {
+                if (*b_data != 0)
+                    x_min = -c(i)/ *b_data;
+            }
+
+            if (x_min > 0 && x_min < minimum_positive) {
+                minimum_positive = x_min;
+                at_i = i;
+            }
+
+            roots_data++;
+            a_data++;
+            b_data++;
+        }
+
+        return std::pair<NT, int> (minimum_positive, at_i);
+    }
+
+    // make the following computations
+    // in ac store the dot products of c with the facets, divided by -2*temperature
+    // in av  save dot products with v
+    // in ap the dot products with p
+    // in acPrime store the dot products of c with the facets, multiplied by -3/(2*temperature)
+    // in ac4 store -4*ac
+    void precomputeForHMC_Boltsmann(const Point &p, const Point &c, const NT temperature, VT& ac, VT& ac4, VT& acPrime, VT& ap, MT& dotProducts) {
+        VT temp = A * c.getCoefficients()/temperature;
+        ac4 = temp*2;
+        ac =  -temp /(2*temperature);
+        acPrime = -(3*temp)/2;
+        ap = A * p.getCoefficients();
+
+        int m = A.rows();
+        for (int i = 0 ; i<m ;i++) {
+            for (int j=1; j<m ; j++)
+                dotProducts(i,j) = A.row(i).dot(A.col(j)); //TODO need whole matrix? is it symmetric?
+        }
+    }
+
+
+    // boundary oracle for hamiltonian monte carlo with Boltzmann
+    // the first call, before being reflected
+    // ac holds the dot products of c with the facets
+    // in av w save dot products with v
+    // ap olds the dot products of facets with p
+    // acPrime holds the values acPrime = - ac / (2*temperature)
+    std::pair<NT, int> HMC_Boltzmann_intersect_first_call(VT& av, const Point &v, const VT& ac, const VT& ap) {
+        av = A * v.getCoefficients();
+        return minPositiveRoots(ac, av, ap-b);
+    }
+
+
+    // compute intersection point of a ray starting from r and pointing to v
+    // with polytope discribed by A and b
+    std::pair<NT, int> HMC_Boltzmann_intersect_not_first_call(Point &p, Point &v, const VT& ac, const VT& acPrime, const VT& ac4, VT& av, VT& ap, const NT lambda_prev,
+            const int facet, const MT& dotProducts) {
+        ap += ac*(lambda_prev*lambda_prev) + av*lambda_prev;
+        VT a = acPrime + ac4(facet)*dotProducts.col(facet);
+        av -= (2*av(facet)) * dotProducts.col(facet);
+        ap += ac*(lambda_prev*lambda_prev) + av*lambda_prev;
+        VT c = ap - b;
+        return minPositiveRoots(a, av, c);
+    }
+
     void free_them_all() {}
 
 };
