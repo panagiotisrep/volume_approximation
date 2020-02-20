@@ -34,6 +34,7 @@
 #include "cooling_hpoly.h"
 #include "sample_only.h"
 #include "exact_vols.h"
+#include "HMC_RandomWalk.h"
 
 //////////////////////////////////////////////////////////
 /**** MAIN *****/
@@ -90,6 +91,7 @@ int main(const int argc, const char** argv)
          hpoly = false,
          billiard=false,
          win2 = false;
+    bool hmc = false;
 
     //this is our polytope
     Hpolytope HP;
@@ -199,6 +201,12 @@ int main(const int argc, const char** argv)
           hpoly = true;
           correct = true;
       }
+
+      if(!strcmp(argv[i],"-HMC")){
+          hmc = true;
+          correct = true;
+      }
+
       if(!strcmp(argv[i],"-WinLen")){
           W = atof(argv[++i]);
           user_W = true;
@@ -598,7 +606,16 @@ int main(const int argc, const char** argv)
       if (Zono) {
           sampling_only<Point>(randPoints, ZP, walk_len, nsam, gaussian_sam, a, InnerBall.first, var1, var2);
       } else if (!Vpoly) {
-          sampling_only<Point>(randPoints, HP, walk_len, nsam, gaussian_sam, a, InnerBall.first, var1, var2);
+          if (hmc) {
+              Point c(n);
+              c.set_coord(0,1.0);
+              HMC_Settings<Point, RNGType> settings(walk_len, rng, c, 1.0, InnerBall.second);
+              HMC_Boltzmann<Point, RNGType> hmcBoltzmann(settings);
+              hmcBoltzmann.sample(HP, InnerBall.first, nsam, randPoints);
+          }
+          else {
+              sampling_only<Point>(randPoints, HP, walk_len, nsam, gaussian_sam, a, InnerBall.first, var1, var2);
+          }
       } else {
           sampling_only<Point>(randPoints, VP, walk_len, nsam, gaussian_sam, a, InnerBall.first, var1, var2);
       }
