@@ -202,8 +202,8 @@ rounding <- function(P, random_walk = NULL, walk_length = NULL, parameters = NUL
 #' P = Vpolytope$new(V)
 #' points = sample_points(P, N = 10000, exact = TRUE)
 #' @export
-sample_points <- function(P = NULL, N = NULL, distribution = NULL, random_walk = NULL, walk_length = NULL, exact = NULL, body = NULL, parameters = NULL, InnerPoint = NULL) {
-    .Call(`_volesti_sample_points`, P, N, distribution, random_walk, walk_length, exact, body, parameters, InnerPoint)
+sample_points <- function(P = NULL, N = NULL, distribution = NULL, random_walk = NULL, walk_length = NULL, exact = NULL, body = NULL, parameters = NULL, InnerPoint = NULL, temperature = NULL, c = NULL) {
+    .Call(`_volesti_sample_points`, P, N, distribution, random_walk, walk_length, exact, body, parameters, InnerPoint, temperature, c)
 }
 
 #' The main function for volume approximation of a convex Polytope (H-polytope, V-polytope or a zonotope)

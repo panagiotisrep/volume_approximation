@@ -611,7 +611,8 @@ int main(const int argc, const char** argv)
               c.set_coord(0,1.0);
               HMC_Settings<Point, RNGType> settings(walk_len, rng, c, 1.0, InnerBall.second);
               HMC_Boltzmann<Point, RNGType> hmcBoltzmann(settings);
-              hmcBoltzmann.sample(HP, InnerBall.first, nsam, randPoints);
+              Point p = InnerBall.first;
+              hmcBoltzmann.sample(HP, p, nsam, randPoints);
           }
           else {
               sampling_only<Point>(randPoints, HP, walk_len, nsam, gaussian_sam, a, InnerBall.first, var1, var2);

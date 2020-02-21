@@ -24,7 +24,7 @@
 #include "sample_only.h"
 #include "simplex_samplers.h"
 #include "vpolyintersectvpoly.h"
-
+#include "HMC_RandomWalk.h"
 
 //' Sample points from a convex Polytope (H-polytope, V-polytope or a zonotope) or use direct methods for uniform sampling from the unit or the canonical or an arbitrary \eqn{d}-dimensional simplex and the boundary or the interior of a \eqn{d}-dimensional hypersphere
 //'
@@ -84,7 +84,9 @@ Rcpp::NumericMatrix sample_points(Rcpp::Nullable<Rcpp::Reference> P = R_NilValue
                                   Rcpp::Nullable<bool> exact = R_NilValue,
                                   Rcpp::Nullable<std::string> body = R_NilValue,
                                   Rcpp::Nullable<Rcpp::List> parameters = R_NilValue,
-                                  Rcpp::Nullable<Rcpp::NumericVector> InnerPoint = R_NilValue){
+                                  Rcpp::Nullable<Rcpp::NumericVector> InnerPoint = R_NilValue,
+                                  Rcpp::Nullable<double> temperature = R_NilValue, // fot HMC
+                                  Rcpp::Nullable<Rcpp::NumericVector> c = R_NilValue){ // for HMC
 
     typedef double NT;
     typedef Cartesian<NT>    Kernel;
@@ -107,6 +109,11 @@ Rcpp::NumericMatrix sample_points(Rcpp::Nullable<Rcpp::Reference> P = R_NilValue
     bool set_mean_point = false, cdhr = false, rdhr = false, ball_walk = false, gaussian = false, billiard = false;
     std::list<Point> randPoints;
     std::pair<Point, NT> InnerBall;
+
+    // for HMC
+    Point _c;
+    double _temperature;
+    bool hmc = false;
 
     numpoints = (!N.isNotNull()) ? 100 : Rcpp::as<unsigned int>(N);
 
@@ -208,7 +215,31 @@ Rcpp::NumericMatrix sample_points(Rcpp::Nullable<Rcpp::Reference> P = R_NilValue
             } else {
                 billiard = true;
             }
-        } else if (Rcpp::as<std::string>(random_walk).compare(std::string("CDHR")) == 0) {
+        }else if (Rcpp::as<std::string>(random_walk).compare(std::string("HMC")) == 0) {
+            hmc = true;
+
+            // check we have an H polytope
+            if (type!= 1)
+                throw Rcpp::exception("HMC under Boltzmann distribution is only for H-polytopes!");
+
+            // check we have c
+            if (c.isNotNull()) {
+                std::vector<double> X(Rcpp::as<Rcpp::NumericVector>(c).begin(),Rcpp::as<Rcpp::NumericVector>(c).end());
+
+                if (Rcpp::as<Rcpp::NumericVector>(c).size() != dim) {
+                    Rcpp::exception("Direction c has to lie in the same dimension as the polytope P");
+                } else {
+                    _c = Point(dim, X.begin(), X.end());
+                }
+            } else
+                throw Rcpp::exception("HMC under Boltzmann distribution requires direction c!");
+
+            if (temperature.isNotNull())
+                _temperature = Rcpp::as<double>(temperature);
+            else
+                throw Rcpp::exception("HMC under Boltzmann distribution requires temperature!");
+
+        }else if (Rcpp::as<std::string>(random_walk).compare(std::string("CDHR")) == 0) {
             cdhr = true;
         } else if (Rcpp::as<std::string>(random_walk).compare(std::string("RDHR")) == 0) {
             rdhr = true;
@@ -308,8 +339,20 @@ Rcpp::NumericMatrix sample_points(Rcpp::Nullable<Rcpp::Reference> P = R_NilValue
 
         switch (type) {
             case 1: {
-                sampling_only<Point>(randPoints, HP, walkL, numpoints, gaussian,
-                                     a, MeanPoint, var1, var2);
+                if (hmc) {
+                    HMC_Settings<Point, RNGType> settings(walkL, rng, _c, _temperature, diam);
+                    HMC_Boltzmann<Point, RNGType> hmcBoltzmann(settings);
+                    Point p = MeanPoint;
+                    Point q = get_point_on_Dsphere<RNGType, Point>(dim, var1.che_rad);
+                    p=p+q;
+                    p = Point(dim);
+                    hmcBoltzmann.sample(HP, p, numpoints, randPoints);
+
+                }
+                else {
+                    sampling_only<Point>(randPoints, HP, walkL, numpoints, gaussian,
+                                         a, MeanPoint, var1, var2);
+                }
                 break;
             }
             case 2: {

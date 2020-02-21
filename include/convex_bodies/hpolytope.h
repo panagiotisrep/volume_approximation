@@ -525,6 +525,7 @@ public:
     // and for which i it happens
     // if no real or positive root, returns - 1
     std::pair<NT, int>  minPositiveRoots(const VT& a, const VT& b, const VT&c) {
+//        std::cout << a.transpose() << "\n" << b.transpose() << "\n" << c.transpose() <<"\n";
         // compute delta = b^2 -4*a*c
         VT roots(A.rows());
 
@@ -541,32 +542,40 @@ public:
         roots -= 4* a.cwiseProduct(c);
         roots_data = roots.data();
         b_data = b.data();
-
+//        std::cout << roots.transpose() << "\n";
         NT minimum_positive = NT(maxNT);
         int at_i = -1;
 
         for (int i=0; i<a.rows(); i++) {
             NT x_min = -1;
 
-            if (*roots_data < 0) {
-                roots_data++;
-                a_data++;
-                b_data++;
-                continue;
-            }
-
-            if (*a_data != 0) {
-                NT sqrt_delta = std::sqrt(*roots_data);
-
-                if (*a_data > 0)
-                    x_min = (- *b_data + sqrt_delta) / (2 * *a_data);
-                else
-                    x_min = (- *b_data - sqrt_delta) / (2 * *a_data);
-            }
-            else {
+            if (*a_data == 0) {
                 if (*b_data != 0)
                     x_min = -c(i)/ *b_data;
             }
+            else {
+
+                if (*roots_data < 0) {
+                    roots_data++;
+                    a_data++;
+                    b_data++;
+                    continue;
+                }
+
+                NT sqrt_delta = std::sqrt(*roots_data);
+
+                NT x1 = (-*b_data - sqrt_delta) / (2 * *a_data);
+                NT x2 = (-*b_data + sqrt_delta) / (2 * *a_data);
+
+                if (x1 < 0)
+                    x_min = x2;
+                else if (x2 < 0)
+                    x_min = x1;
+                else {
+                    x_min = x1 < x2 ? x1 : x2;
+                }
+            }
+
 
             if (x_min > 0 && x_min < minimum_positive) {
                 minimum_positive = x_min;
@@ -590,14 +599,15 @@ public:
     void precomputeForHMC_Boltsmann(const Point &p, const Point &c, const NT temperature, VT& ac, VT& ac4, VT& acPrime, VT& ap, MT& dotProducts) {
         VT temp = A * c.getCoefficients()/temperature;
         ac4 = temp*2;
-        ac =  -temp /(2*temperature);
+        ac =  -temp /2;
         acPrime = -(3*temp)/2;
         ap = A * p.getCoefficients();
+        dotProducts.setZero(num_of_hyperplanes(), num_of_hyperplanes());
 
         int m = A.rows();
         for (int i = 0 ; i<m ;i++) {
-            for (int j=1; j<m ; j++)
-                dotProducts(i,j) = A.row(i).dot(A.col(j)); //TODO need whole matrix? is it symmetric?
+            for (int j=0; j<m ; j++)
+                dotProducts(i,j) = A.row(i).dot(A.row(j)); //TODO need whole matrix? is it symmetric?
         }
     }
 
@@ -608,8 +618,9 @@ public:
     // in av w save dot products with v
     // ap olds the dot products of facets with p
     // acPrime holds the values acPrime = - ac / (2*temperature)
-    std::pair<NT, int> HMC_Boltzmann_intersect_first_call(VT& av, const Point &v, const VT& ac, const VT& ap) {
+    std::pair<NT, int> HMC_Boltzmann_intersect_first_call(Point& p, VT& av, const Point &v, const VT& ac, VT& ap) {
         av = A * v.getCoefficients();
+        ap = A * p.getCoefficients();
         return minPositiveRoots(ac, av, ap-b);
     }
 
@@ -618,12 +629,15 @@ public:
     // with polytope discribed by A and b
     std::pair<NT, int> HMC_Boltzmann_intersect_not_first_call(Point &p, Point &v, const VT& ac, const VT& acPrime, const VT& ac4, VT& av, VT& ap, const NT lambda_prev,
             const int facet, const MT& dotProducts) {
-        ap += ac*(lambda_prev*lambda_prev) + av*lambda_prev;
-        VT a = acPrime + ac4(facet)*dotProducts.col(facet);
-        av -= (2*av(facet)) * dotProducts.col(facet);
-        ap += ac*(lambda_prev*lambda_prev) + av*lambda_prev;
+//        ap += ac*(lambda_prev*lambda_prev) + av*lambda_prev;
+//        VT a = acPrime + ac4(facet)*dotProducts.col(facet);
+//        ap += ac*(lambda_prev*lambda_prev) + av*lambda_prev;
+        ap = A * p.getCoefficients();
+        NT temp = av(facet); //think we need to store it in temp to avoid aliasing in next operation
+//        av -= (2*temp) * dotProducts.row(facet) + lambda_prev * (-ac4/2 + ac4(facet)*dotProducts.row(facet));
+        av = A * v.getCoefficients();
         VT c = ap - b;
-        return minPositiveRoots(a, av, c);
+        return minPositiveRoots(ac, av, c);
     }
 
     void free_them_all() {}

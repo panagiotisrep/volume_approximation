@@ -34,11 +34,12 @@ public:
 
     point(const unsigned int dim, iter begin, iter endit) {
         d = dim;
-        coeffs.resize(d);
+        coeffs.setZero(d);
         int i = 0;
 
-        for (iter it=begin ; it != endit ; it++)
+        for (iter it=begin ; it != endit ; it++) {
             coeffs(i++) = *it;
+        }
     }
 
     point(const Coeff& coeffs) {
@@ -50,6 +51,7 @@ public:
         d = dim;
         iter it = cofs.begin();
         int i=0;
+        coeffs.resize(d);
 
         for (; it != cofs.end(); it++,i++)
             coeffs(i) = *it;
