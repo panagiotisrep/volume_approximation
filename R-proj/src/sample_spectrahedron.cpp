@@ -4,6 +4,7 @@
 
 #include <Rcpp.h>
 #include <RcppEigen.h>
+#include <Spectra/GenEigsSolver.h>
 #include <chrono>
 #include "cartesian_geom/cartesian_kernel.h"
 #include <boost/random.hpp>

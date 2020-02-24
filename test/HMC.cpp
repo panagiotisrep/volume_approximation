@@ -20,6 +20,7 @@
 #include "QuadraticEigenvaluesProblem.h"
 #include "spectrahedron.h"
 #include "EigenDenseMatrix.h"
+#include "DenseProductMatrix.h"
 #include "HMC_RandomWalk.h"
 #include "SDPA_FormatManager.h"
 
