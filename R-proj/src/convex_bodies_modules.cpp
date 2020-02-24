@@ -72,6 +72,17 @@ public:
 
 };
 
+class Spectrahedron {
+public:
+    Spectrahedron() {}
+
+    Spectrahedron(Rcpp::List _matrices) : matrices(_matrices) {
+        dimension = _matrices.size() - 1;
+    }
+
+    unsigned int dimension;
+    Rcpp::List matrices;
+};
 
 RCPP_MODULE(yada){
     using namespace Rcpp ;
@@ -181,6 +192,27 @@ RCPP_MODULE(yada){
     .field( "volume", &VPinterVP::vol )
     .field( "V1", &VPinterVP::V1 )
     .field( "V2", &VPinterVP::V2 );
+
+    //' An exposed class to represent a Spectrahedron
+    //'
+    //' @description A spectrahedron is a convex body described by a linear matrix inequality of the form \eqn{A_0 + x_1*A_1 + ... + x_n*A_d}.
+    //'
+    //' @field matrices A list of \eqn{n+1} square symmetric matrices
+    //'
+    //' @example
+    //' # create a 2-d unit simplex
+    //' M0 = matrix(c(1,0,0,0,1,0,0,0,1), ncol=3, nrow=3, byrow=TRUE)
+    //' M1 = matrix(c(1,2,0,2,1,4,0,4,1), ncol=3, nrow=3, byrow=TRUE)
+    //' matrices = list(M0, M1)
+    //' S = Spectrahedron$new(matrices)
+    //' @export
+    class_<Spectrahedron>("Spectrahedron")
+    // expose the default constructor
+    .constructor()
+    .constructor<Rcpp::List>()
+
+    .field( "matrices", &Spectrahedron::matrices )
+    .field( "dimension", &Spectrahedron::dimension );
 }
 
 extern SEXP _rcpp_module_boot_yada(void);

@@ -88,6 +88,11 @@ frustum_of_simplex <- function(a, z0) {
     .Call(`_volesti_frustum_of_simplex`, a, z0)
 }
 
+#' @export
+generator_sdp <- function(nn = NULL, mm = NULL) {
+    invisible(.Call(`_volesti_generator_sdp`, nn, mm))
+}
+
 #' Compute an inscribed ball of a convex polytope
 #'
 #' For a H-polytope described by a \eqn{m\times d} matrix \eqn{A} and a \eqn{m}-dimensional vector \eqn{b}, s.t.: \eqn{Ax\leq b}, this function computes the largest inscribed ball (Chebychev ball) by solving the corresponding linear program.
@@ -204,6 +209,11 @@ rounding <- function(P, random_walk = NULL, walk_length = NULL, parameters = NUL
 #' @export
 sample_points <- function(P = NULL, N = NULL, distribution = NULL, random_walk = NULL, walk_length = NULL, exact = NULL, body = NULL, parameters = NULL, InnerPoint = NULL) {
     .Call(`_volesti_sample_points`, P, N, distribution, random_walk, walk_length, exact, body, parameters, InnerPoint)
+}
+
+#' @export
+HMC <- function(SP = NULL, file = NULL, objectiveFunction = NULL, N = NULL, walk_length = NULL, Temperature = NULL, Diameter = NULL) {
+    .Call(`_volesti_HMC`, SP, file, objectiveFunction, N, walk_length, Temperature, Diameter)
 }
 
 #' The main function for volume approximation of a convex Polytope (H-polytope, V-polytope or a zonotope)
