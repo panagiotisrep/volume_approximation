@@ -133,7 +133,7 @@ public:
 
             // we are at point p and the trajectory a*t^2 + vt + p
             // find how long we can walk till we hit the boundary
-            NT lambda = spectrahedron.positive_intersection(a, v, p, precomputedValues);
+            NT lambda = spectrahedron.positiveIntersection(a, v, p, precomputedValues);
 
             // We just solved a quadratic polynomial eigenvalue system At^2 + Bt + C,
             // where A = lmi(a) - A0, B = lmi(v) - A0 and C = lmi(p)
@@ -178,7 +178,7 @@ public:
 
             // compute reflected direction
             VT reflectedTrajectory;
-            spectrahedron.compute_reflection(p, v, reflectedTrajectory, precomputedValues);
+            spectrahedron.computeReflection(p, v, reflectedTrajectory, precomputedValues);
             v = reflectedTrajectory;
         }
 

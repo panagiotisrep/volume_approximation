@@ -5,6 +5,8 @@
 #ifndef VOLESTI_DENSEPRODUCTMATRIX_H
 #define VOLESTI_DENSEPRODUCTMATRIX_H
 
+//#define PARTIAL_LU_DECOMPOSITION
+
 /// A wrapper class for dense Eigen matrices in Spectra
 /// This class will be the wrapper to use the Spectra nonsymemmetric standard eigenvalue Cx = lx solver to
 /// solve a generalized eigenvalue Ax = lBx.
@@ -30,7 +32,13 @@ public:
     MT *B;
 
     /// The decomposition we will use
+    /// If PARTIAL_LU_DECOMPOSITION is defined, use the Eigen partial LU decomposition,
+    /// otherwise full. The partial is faster but assumes that the matrix has full rank.
+#if defined(PARTIAL_LU_DECOMPOSITION)
+    typedef Eigen::PartialPivLU<MT> Decomposition;
+#else
     typedef Eigen::FullPivLU<MT> Decomposition;
+#endif
 
     /// The LU decomposition of B
     Decomposition Blu;
@@ -64,7 +72,8 @@ public:
     /// \param[out] y_out
     void perform_op(NT const * x_in, NT* y_out) {
 
-        // Declaring the vector like this, we don't copy the values of v and after to w
+        // Declaring the vectors like this, we don't copy the values of x_in to v
+        // and next of y to y_out
         Eigen::Map<VT> const x(const_cast<double*>(x_in), _rows);
         VT const v = *A * x;
 

@@ -5,7 +5,8 @@
 #ifndef VOLESTI_LMI_H
 #define VOLESTI_LMI_H
 
-/// This class handles a linear matrix inequality of the form \[A_0 +  \sum x_i A_i\]
+/// This class handles a linear matrix inequality of the form \[A_0 +  \sum x_i A_i <= 0\],
+/// where <= denotes negative definiteness
 /// @tparam NT Numeric Type
 /// @tparam MT Matrix Type
 /// @tparam VT Vector Type
@@ -160,6 +161,12 @@ class LMI<NT, Eigen::Matrix<NT,Eigen::Dynamic,Eigen::Dynamic>, Eigen::Matrix<NT,
         }
 
         ret.normalize();
+    }
+
+    /// \param i An indicator to a matrix
+    /// \return Pointer to A_i
+    MT* const getMatrix(const int i) {
+        return &(matrices[i]);
     }
 };
 

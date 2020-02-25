@@ -14,7 +14,7 @@
 #include "samplers.h"
 #include "rounding.h"
 #include "sample_only.h"
-#include "QuadraticEigenvaluesProblem.h"
+#include "EigenvaluesProblems.h"
 #include "LMI.h"
 #include "spectrahedron.h"
 #include "HMC_RandomWalk.h"

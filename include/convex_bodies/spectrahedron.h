@@ -15,8 +15,12 @@ template<typename NT, typename MT, typename VT>
 class Spectrahedron {
 public:
 
+    /// The type of a pair of NT
+    typedef std::pair<NT, NT> pairNT;
+
     /// Among successive calls of this class methods, we may need to pass data
     /// from one call to the next, to avoid repeating computations, or to efficiently update values
+    /// Warning: this struct assists in many methods; perhaps for different methods use different instances
     struct PrecomputedValues {
 
         /// These flags indicate whether the corresponding matrices are computed
@@ -25,8 +29,9 @@ public:
         bool computed_C = false;
         bool computed_XY = false;
 
-        /// The matrices the method positive_intersection receives from its previous call
-        /// if the flag first_positive_intersection is true
+        /// The matrices the method positiveIntersection receives from its previous call
+        /// if the flag first_positive_intersection is true.
+        /// Matrix A is also used in coordinateIntersection
         MT A, B, C, X, Y;
 
         /// In method positive_intersect, the distance we are computing corresponds
@@ -61,7 +66,7 @@ public:
     /// \param[in] b Input vector
     /// \param[in] c Input vector
     /// \param[in, out] precomputedValues Holds matrices A, C
-    void createMatricesForPoistiveIntersection(const VT& a, const VT& b, const VT& c, PrecomputedValues& precomputedValues) {
+    void createMatricesForPositiveIntersection(const VT& a, const VT& b, const VT& c, PrecomputedValues& precomputedValues) {
         // check if matrices A, C are ready
         // if not compute them
         if (!precomputedValues.computed_A) {
@@ -87,18 +92,39 @@ public:
     /// \param[in] c Input Vector, the constant term
     /// \param[in, out] precomputedValues Data we move between successive method calls
     /// \returns The distance d
-    NT positive_intersection(const VT& a, const VT& b, const VT& c, PrecomputedValues& precomputedValues) {
+    NT positiveIntersection(VT const & a, VT const & b, VT const & c, PrecomputedValues& precomputedValues) {
         unsigned int matrixDim = lmi.sizeOfMatrices();
 
         // create matrices A, B, C
-        createMatricesForPoistiveIntersection(a, b, c, precomputedValues);
+        createMatricesForPositiveIntersection(a, b, c, precomputedValues);
 
         // get the minimum positive eigenvalue of At^2 + Bt + C
-        QuadraticEigenvaluesProblem<NT, MT, VT> quadraticEigenvaluesProblem;
-        NT distance = quadraticEigenvaluesProblem.minimumPositiveEigenvalue(precomputedValues.A, precomputedValues.B, precomputedValues.C, precomputedValues.X,
-                precomputedValues.Y, precomputedValues.eigenvector, precomputedValues.computed_XY);
+        EigenvaluesProblems<NT, MT, VT> quadraticEigenvaluesProblem;
+        NT distance = quadraticEigenvaluesProblem.minPosQuadraticEigenvalue(precomputedValues.A, precomputedValues.B,
+                                                                            precomputedValues.C, precomputedValues.X,
+                                                                            precomputedValues.Y,
+                                                                            precomputedValues.eigenvector,
+                                                                            precomputedValues.computed_XY);
 
         return distance;
+    }
+
+
+    /// Computes the distance d one must travel on the line a + tb,
+    /// assuming we start at t=0 and that b has zero everywhere and 1 in its i-th coordinate.
+    /// We must solve the generalized eigenvalue problem A+tB, where A = lmi(a) and B=(lmi) - A0 = A_i;
+    /// \param[in] a Input vector
+    /// \param[in] coordinate Indicator of the i-th coordinate
+    /// \return The pair (positive t, negative t) for which we reach the boundary
+    pairNT coordinateIntersection(VT const & a, int const coordinate, PrecomputedValues& precomputedValues) {
+
+        // prepare the generalized eigenvalue problem A+lB
+        // we may not have to compute A!
+        if (!precomputedValues.computed_A)
+            lmi.evaluate(a, precomputedValues.A);
+
+        EigenvaluesProblems<NT, MT, VT> eigenvaluesProblems;
+        return eigenvaluesProblems.symGeneralizedProblem(precomputedValues.A, *(lmi.getMatrix(coordinate)));
     }
 
     /// Computed the reflected direction at a point on the boundary of the spectrahedron.
@@ -106,7 +132,7 @@ public:
     /// \param[in] incomingDirection The direction of the trajectory as it hits the boundary
     /// \param[out] reflectedDirection The reflected direction
     /// \param[in] precomputedValues Must contain an eigenvalue needed to compute the reflection
-    void compute_reflection(const VT& point, const VT& incomingDirection, VT& reflectedDirection, PrecomputedValues& precomputedValues) {
+    void computeReflection(VT const & point, VT const & incomingDirection, VT& reflectedDirection, PrecomputedValues& precomputedValues) {
 
         // get the gradient of the determinant of the lmi at point
         VT grad;

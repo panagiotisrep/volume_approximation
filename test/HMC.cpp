@@ -17,7 +17,7 @@
 #include "cooling_hpoly.h"
 #include "sample_only.h"
 #include "exact_vols.h"
-#include "QuadraticEigenvaluesProblem.h"
+#include "EigenvaluesProblems.h"
 #include "spectrahedron.h"
 #include "EigenDenseMatrix.h"
 #include "DenseProductMatrix.h"

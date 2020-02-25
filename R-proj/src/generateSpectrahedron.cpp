@@ -16,7 +16,7 @@
 #include "samplers.h"
 #include "rounding.h"
 #include "sample_only.h"
-#include "QuadraticEigenvaluesProblem.h"
+#include "EigenvaluesProblems.h"
 #include "spectrahedron.h"
 #include "LMI.h"
 #include "sdp_generator.h"
