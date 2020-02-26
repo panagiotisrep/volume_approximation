@@ -51,7 +51,8 @@ int main(int argc, char* argv[]) {
 
     RNGType rng(seed);
 
-    int walkL=1, NN=10, T=1, diam=1;
+    int walkL=1, NN=30;
+    NT T=0.1, diam=1;
 
 //    SP.ComputeInnerBall(diam, radius);
 
@@ -70,7 +71,7 @@ int main(int argc, char* argv[]) {
     for (typename std::list<Point>::iterator rpit = randPoints.begin(); rpit!=randPoints.end(); rpit++, jj++)
         RetMat.col(jj) = (*rpit).getCoefficients();
 
-    std::cout << RetMat;
-
+//    std::cout << RetMat;
+    std::cout << "\n\n\n" << RetMat.transpose() * c << "\n";
     return 0;
 }

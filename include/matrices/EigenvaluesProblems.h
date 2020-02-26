@@ -5,15 +5,19 @@
 #ifndef VOLESTI_EIGENVALUESPROBLEMS_H
 #define VOLESTI_EIGENVALUESPROBLEMS_H
 
-
-/// Uncomment to use Eigen solver for generalized eigenvalue problem; otherwise Spectra
-#define EIGEN_EIGENVALUES_SOLVER
+/// Uncomment the solver the function minPosGeneralizedEigenvalue uses
+/// Eigen solver for generalized eigenvalue problem
+//#define EIGEN_EIGENVALUES_SOLVER
+/// Spectra standard eigenvalue problem
+//#define SPECTRA_EIGENVALUES_SOLVER
+/// ARPACK++ standard eigenvalues solver
+#define ARPACK_EIGENVALUES_SOLVER
 
 #include "DenseProductMatrix.h"
 
 #include "../../external/Spectra/include/Spectra/SymGEigsSolver.h"
 #include "../../external/Spectra/include/Spectra/GenEigsSolver.h"
-
+#include "../../external/arpack++/include/arsnsym.h"
 
 /// Solve eigenvalues problems
 /// \tparam NT Numeric Type
@@ -35,7 +39,11 @@ public:
     /// The type for Eigen vector
     typedef Eigen::Matrix<NT, Eigen::Dynamic, 1> VT;
     /// The type of a complex Eigen Vector for handling eigenvectors
+#if defined(EIGEN_EIGENVALUES_SOLVER) || defined (SPECTRA_EIGENVALUES_SOLVER)
     typedef typename Eigen::GeneralizedEigenSolver<MT>::ComplexVectorType CVT;
+#elif defined(ARPACK_EIGENVALUES_SOLVER)
+    typedef Eigen::Matrix<NT, Eigen::Dynamic, 1> CVT;
+#endif
 
     /// The type of a pair of NT
     typedef std::pair<NT, NT> NTpair;
@@ -122,9 +130,7 @@ public:
 
         // retrieve corresponding eigenvector
         eigenvector = ges.eigenvectors().col(index);
-
-//        std::cout << lambdaMinPositive << " " << eigenvector.transpose() << "\n";fflush(stdout);
-#else
+#elif defined(SPECTRA_EIGENVALUES_SOLVER)
         // Transform the problem to a standard eigenvalue problem and use the general eigenvalue solver of Spectra
 
         // This makes the transformation to standard eigenvalue problem. See class for more info.
@@ -147,14 +153,55 @@ public:
         eigs.compute();
 
         //retrieve result and invert to get required eigenvalue of the original problem
-        if (eigs.info() != Spectra::SUCCESSFUL)
-            return 0;
+        if (eigs.info() != Spectra::SUCCESSFUL) {
+            eigenvector.setZero(A.rows());
+            return NT(O);
+        }
 
         lambdaMinPositive = 1/((eigs.eigenvalues())(0).real());
 
-
         // retrieve corresponding eigenvector
-        eigenvector = ges.eigenvectors().col(index);
+        int matrixDim = A.rows();
+        eigenvector.resize(matrixDim);
+        for (int i = 0; i < matrixDim; i++)
+            eigenvector(i) =  (eigs.eigenvectors()).col(0)(i);
+
+#elif defined(ARPACK_EIGENVALUES_SOLVER)
+        // Transform the problem to a standard eigenvalue problem and use the general eigenvalue solver of ARPACK++
+
+        // This makes the transformation to standard eigenvalue problem. See class for more info.
+        // We have the generalized problem  A + lB, or Av = -lBv
+        // This class computes the matrix product vector Mv, where M = -B * A^[-1]
+        MT _B = -1 * B; // TODO avoid this allocation
+        DenseProductMatrix<NT> M(&_B, &A);
+
+        // Creating an eigenvalue problem and defining what we need:
+        // the  eigenvector of A with largest real.
+        ARNonSymStdEig<NT, DenseProductMatrix<NT> >
+        dprob(A.cols(), 10, &M, &DenseProductMatrix<NT>::MultMv, std::string ("LR"));
+
+        // compute
+        dprob.FindEigenvectors();
+
+        // allocate memory for the eigenvector here
+        eigenvector.setZero(A.rows());
+
+        if (!dprob.EigenvaluesFound()) {
+            // if failed to find eigenvalues
+            return NT(0);
+        }
+
+        // retrieve eigenvalue of the original system
+        lambdaMinPositive = 1/dprob.EigenvalueReal(0);
+
+        eigenvector.setZero(A.rows());
+        if (dprob.EigenvectorsFound()) {
+            //retrieve corresponding eigenvector
+            for (int i=0 ;i<A.rows() ; i++)
+                eigenvector(i) = dprob.EigenvectorReal(0, i);
+        }
+
+
 #endif
 //        std::cout << lambdaMinPositive << " " << eigenvector.transpose() << "\n";fflush(stdout);
         return lambdaMinPositive;
@@ -210,7 +257,7 @@ public:
     /// \param[in, out] updateOnly True if X,Y were previously computed and only B,C changed
     /// \return Minimum positive eigenvalue
     NT
-    minPosQuadraticEigenvalue(const MT &A, const MT &B, const MT &C, MT &X, MT &Y, VT &eigenvector, bool &updateOnly) {
+    minPosQuadraticEigenvalue(MT const & A, MT const &B, MT const &C, MT &X, MT &Y, VT &eigenvector, bool &updateOnly) {
         // perform linearization and create generalized eigenvalue problem X+lY
         linearization(A, B, C, X, Y, updateOnly);
 
@@ -218,14 +265,23 @@ public:
         CVT eivector;
         NT lambdaMinPositive = minPosGeneralizedEigenvalue(X, Y, eivector);
 
+        if (lambdaMinPositive == 0)
+            return 0;
+
         int matrixDim = A.rows();
 
         // the eivector has dimension 2*matrixDim
         // while the eigenvector of the original problem has dimension matrixDim
         // retrieve the eigenvector by keeping only #matrixDim coordinates.
         eigenvector.resize(matrixDim);
+
+#if defined(EIGEN_EIGENVALUES_SOLVER) || defined (SPECTRA_EIGENVALUES_SOLVER)
         for (int i = 0; i < matrixDim; i++)
             eigenvector(i) =  eivector(matrixDim + i).real();
+#elif defined(ARPACK_EIGENVALUES_SOLVER)
+        for (int i = 0; i < matrixDim; i++)
+            eigenvector(i) =  eivector(matrixDim + i);
+#endif
 
         return lambdaMinPositive;
     }

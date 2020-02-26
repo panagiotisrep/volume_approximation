@@ -5,9 +5,9 @@
 #ifndef VOLESTI_DENSEPRODUCTMATRIX_H
 #define VOLESTI_DENSEPRODUCTMATRIX_H
 
-//#define PARTIAL_LU_DECOMPOSITION
+#define PARTIAL_LU_DECOMPOSITION
 
-/// A wrapper class for dense Eigen matrices in Spectra
+/// A wrapper class for dense Eigen matrices in Spectra and ARPACK++
 /// This class will be the wrapper to use the Spectra nonsymemmetric standard eigenvalue Cx = lx solver to
 /// solve a generalized eigenvalue Ax = lBx.
 /// In particular, this class represents the product @f[ C = B^-1 A @f]
@@ -27,9 +27,9 @@ public:
     int _cols;
 
     /// Pointer to matrix A
-    MT *A;
+    MT const *A;
     /// Pointer to matrix B
-    MT *B;
+    MT const *B;
 
     /// The decomposition we will use
     /// If PARTIAL_LU_DECOMPOSITION is defined, use the Eigen partial LU decomposition,
@@ -47,7 +47,7 @@ public:
     ///
     /// \param[in] A The matrix A
     /// \param[in] B The matrix B
-    DenseProductMatrix(MT *A, MT *B) : A(A), B(B) {
+    DenseProductMatrix(MT const *A, MT const *B) : A(A), B(B) {
         Blu = Decomposition(*B);
         _rows = A->rows();
         _cols = B->cols();
@@ -66,11 +66,27 @@ public:
     }
 
     /// Required by Spectra.
-    /// Computed the product Cx = y, i.e. @f[ (B^-1 A)v = y@$]. But B = LU, so Ax = LUy.
+    /// Computes the product Cx = y, i.e. @f[ (B^-1 A)v = y@$]. But B = LU, so Ax = LUy.
     /// Let Ax = v, then LUy = v. Then Lw = v and finally Uy = w to get y;
     /// \param[in] x_in
     /// \param[out] y_out
     void perform_op(NT const * x_in, NT* y_out) {
+
+        // Declaring the vectors like this, we don't copy the values of x_in to v
+        // and next of y to y_out
+        Eigen::Map<VT> const x(const_cast<double*>(x_in), _rows);
+        VT const v = *A * x;
+
+        Eigen::Map<VT> y(y_out, _rows);
+        y = Blu.solve(v);
+    }
+
+    /// Required by arpack.
+    /// Computes the product Cx = y, i.e. @f[ (B^-1 A)v = y@$]. But B = LU, so Ax = LUy.
+    /// Let Ax = v, then LUy = v. Then Lw = v and finally Uy = w to get y;
+    /// \param[in] x_in
+    /// \param[out] y_out
+    void MultMv(NT * x_in, NT* y_out) {
 
         // Declaring the vectors like this, we don't copy the values of x_in to v
         // and next of y to y_out

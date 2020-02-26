@@ -127,7 +127,7 @@ public:
         return eigenvaluesProblems.symGeneralizedProblem(precomputedValues.A, *(lmi.getMatrix(coordinate)));
     }
 
-    /// Computed the reflected direction at a point on the boundary of the spectrahedron.
+    /// Computes the reflected direction at a point on the boundary of the spectrahedron.
     /// \param[in] point A point on the boundary of the spectrahedron
     /// \param[in] incomingDirection The direction of the trajectory as it hits the boundary
     /// \param[out] reflectedDirection The reflected direction
