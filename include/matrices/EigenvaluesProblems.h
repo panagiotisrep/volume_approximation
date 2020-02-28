@@ -69,7 +69,7 @@ public:
         // Construct generalized eigen solver object
         // requesting the minmum negative and largest positive eigenvalues
         Spectra::SymGEigsSolver<NT, Spectra::BOTH_ENDS, Spectra::DenseSymMatProd<NT>, Spectra::DenseCholesky<NT>, Spectra::GEIGS_CHOLESKY>
-                geigs(&op, &Bop, 2, 5 < matrixDim ? 1 : matrixDim);
+                geigs(&op, &Bop, 2, 5 < matrixDim ? 5 : matrixDim);
 
         // Initialize and compute
         geigs.init();
@@ -178,7 +178,7 @@ public:
         // Creating an eigenvalue problem and defining what we need:
         // the  eigenvector of A with largest real.
         ARNonSymStdEig<NT, DenseProductMatrix<NT> >
-        dprob(A.cols(), 10, &M, &DenseProductMatrix<NT>::MultMv, std::string ("LR"));
+        dprob(A.cols(), 3, &M, &DenseProductMatrix<NT>::MultMv, std::string ("LR"));
 
         // compute
         dprob.FindEigenvectors();

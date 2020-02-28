@@ -58,6 +58,8 @@ public:
     Settings settings;
 
 
+    HMC_RandomWalk() {}
+
     /// Constructor
     /// \param[in] settings The settings of the random walk
     HMC_RandomWalk(Settings& settings) : settings(settings) {}
@@ -184,6 +186,12 @@ public:
         // if the #reflections exceeded the limit, don't move
         if(reflectionsNum == reflectionsNumBound)
             p = p0;
+    }
+
+    /// Sets the temperature in the distribution
+    /// \param[in] temperature New value of temperature
+    void setTemperature(NT temperature) {
+        settings.temperature = temperature;
     }
 };
 #endif //VOLESTI_HMC_RANDOMWALK_H

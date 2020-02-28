@@ -21,7 +21,7 @@
 #include "sdp_generator.h"
 #include "SDPA_FormatManager.h"
 #include "CoordinateDirectionsHitAndRun_RandomWalk.h"
-
+#include "SimulatedAnnealing.h"
 
 /// An enumeration of the available random walks
 enum RandomWalk {
@@ -116,7 +116,7 @@ void getHMCSettings(Spectrahedron& spectrahedron, HMCSettings &settings, VT cons
     if (!Rcpp::as<Rcpp::List>(parameters).containsElementNamed("Diameter")) {
         // no diameter, estimate it
         diameter = spectrahedron.estimateDiameter(spectrahedron.dimension()*4, interiorPoint);
-        std::cout << "No diameter was provided; estimated it at " << diameter << "\n";
+        std::cout << "No diameter was provided; estimated it at " << diameter << "\n";fflush(stdout);
     }
     else
         // get diameter from user
@@ -141,7 +141,6 @@ Rcpp::NumericMatrix HMC(Rcpp::Nullable<Rcpp::CharacterVector> spectrahedronInput
     typedef typename Kernel::Point Point;
     typedef boost::mt19937 RNGType;
     typedef Spectrahedron <NT, MT, VT> SPECTRAHEDRON;
-
     typedef HMC_RandomWalk<Point, MT, VT, RNGType > HMC_RandomWalk;
     typedef CoordinateDirectionsHitAndRun_RandomWalk<Point, MT, VT, RNGType > CDHR;
 
@@ -165,6 +164,7 @@ Rcpp::NumericMatrix HMC(Rcpp::Nullable<Rcpp::CharacterVector> spectrahedronInput
     // get interiorPoint
     Point interiorPoint(spectrahedron.dimension());
 
+    // sample points
     switch (randomWalk) {
         case coordHitAndRun:
             // Sample from uniform distribution with coordinate directions hit and run
@@ -190,4 +190,39 @@ Rcpp::NumericMatrix HMC(Rcpp::Nullable<Rcpp::CharacterVector> spectrahedronInput
 
     return Rcpp::wrap(RetMat);
 
+}
+
+
+
+//' @export
+// [[Rcpp::export]]
+Rcpp::NumericMatrix solveSDP(Rcpp::Nullable<Rcpp::CharacterVector> spectrahedronInputFile = R_NilValue,
+                        Rcpp::Nullable<Rcpp::List> parameters = R_NilValue) {
+
+    typedef double NT;
+    typedef Eigen::Matrix<NT, Eigen::Dynamic, 1> VT;
+    typedef Eigen::Matrix <NT, Eigen::Dynamic, Eigen::Dynamic> MT;
+    typedef Cartesian <NT> Kernel;
+    typedef typename Kernel::Point Point;
+    typedef boost::mt19937 RNGType;
+    typedef Spectrahedron <NT, MT, VT> SPECTRAHEDRON;
+    typedef SimulatedAnnealing<Point, MT, VT> SA;
+
+    // load spectrahedron from file
+    VT objectiveFunction;
+    SPECTRAHEDRON spectrahedron;
+    loadSpectrahedronFromFile<SPECTRAHEDRON, NT, MT, VT> (spectrahedron, objectiveFunction, spectrahedronInputFile);
+
+    NT error = Rcpp::as<NT>(Rcpp::as<Rcpp::List>(parameters)["error"]);
+    int walkLength = Rcpp::as<int>(Rcpp::as<Rcpp::List>(parameters)["walkLength"]);
+    int maxNumSteps = Rcpp::as<int>(Rcpp::as<Rcpp::List>(parameters)["maxNumSteps"]);
+    NT k = Rcpp::as<NT>(Rcpp::as<Rcpp::List>(parameters)["k"]);
+
+    SA::Settings settings(error, walkLength, maxNumSteps, k);
+    SA simulatedAnnealing(&spectrahedron, Point(objectiveFunction), settings);
+
+    Point x;
+    simulatedAnnealing.solve(x);
+
+    return Rcpp::wrap(x.getCoefficients());
 }

@@ -24,6 +24,7 @@
 #include "HMC_RandomWalk.h"
 #include "SDPA_FormatManager.h"
 #include "CoordinateDirectionsHitAndRun_RandomWalk.h"
+#include "SimulatedAnnealing.h"
 
 
 int main(int argc, char* argv[]) {
@@ -37,6 +38,7 @@ int main(int argc, char* argv[]) {
     typedef boost::mt19937 RNGType;
     typedef Spectrahedron <NT, MT, VT> SPECTRAHEDRON;
     typedef HMC_RandomWalk<Point, MT, VT, RNGType > HMC_RandomWalk;
+    typedef SimulatedAnnealing<Point, MT, VT> SA;
 
     std::ifstream inp;
     inp.open(argv[1],std::ifstream::in);
@@ -47,6 +49,8 @@ int main(int argc, char* argv[]) {
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
     SPECTRAHEDRON spectrahedron(lmi);
+
+#ifdef SAMPLING
     unsigned int n = spectrahedron.dimension();
 
     RNGType rng(seed);
@@ -73,5 +77,15 @@ int main(int argc, char* argv[]) {
 
 //    std::cout << RetMat;
     std::cout << "\n\n\n" << RetMat.transpose() * c << "\n";
+
+#endif
+
+    SA::Settings settings(0.001, 1,15,0.35);
+    SA simulatedAnnealing(&spectrahedron, Point(c), settings);
+
+    Point x;
+    NT min = simulatedAnnealing.solve(x);
+
+    std::cout << min << "\n";// << x.getCoefficients().transpose() << "\n";
     return 0;
 }
