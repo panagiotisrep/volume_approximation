@@ -156,6 +156,10 @@ public:
     }
 
 
+    FT distance(point const & p) {
+        return (this->coeffs - p.coeffs).norm();
+    }
+
     FT squared_length() const {
 
         FT lsq = FT(0.0);

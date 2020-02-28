@@ -50,6 +50,8 @@ public:
         Settings(const int walkLength, const RNGType& rng, const Point& c, const NT temperature, const NT diameter,
                  unsigned int reflectionsBound = 10, NT dl = 0.995) : walk_length(walkLength), rng(rng), c(c.getCoefficients()), temperature(temperature),
                  diameter(diameter), reflectionsBound(reflectionsBound), dl(dl) {}
+
+         Settings() {}
     };
 
     /// The parameters of the random walk
@@ -73,9 +75,6 @@ public:
     /// \param[in] pointsNum The number of points to sample
     /// \param[out] points The list of the sampled points
     void sample(SPECTRAHEDRON& spectrahedron, const Point& interiorPoint, const unsigned int pointsNum, std::list<Point>& points) {
-        boost::random::uniform_real_distribution<> urdist(0, 1);
-        RNGType& rng = settings.rng;
-
         // store intermediate results between successive calls of methods
         // of the class spectrahedron, to avoid repeating computations
         PrecomputedValues precomputedValues;

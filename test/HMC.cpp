@@ -23,7 +23,7 @@
 #include "DenseProductMatrix.h"
 #include "HMC_RandomWalk.h"
 #include "SDPA_FormatManager.h"
-
+#include "CoordinateDirectionsHitAndRun_RandomWalk.h"
 
 
 int main(int argc, char* argv[]) {

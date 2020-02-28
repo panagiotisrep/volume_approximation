@@ -2,9 +2,11 @@ PKG_CPPFLAGS=-I../../external/Spectra/include -I../../external/boost -I../../ext
 PKG_CXXFLAGS= -lm -ldl -Wno-ignored-attributes -DBOOST_NO_AUTO_PTR
 CXX_STD = CXX11
 
-PKG_LIBS=-LRproj_externals/lp_solve -llp_solve $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+PKG_LIBS=-LRproj_externals/lp_solve -llp_solve $(LAPACK_LIBS) $(BLAS_LIBS)  $(FLIBS)  $(lapack) $(ARPACK)  -lpthread Rproj_externals/libopenblas.a -lpthread -larpack
 
 $(SHLIB): Rproj_externals/lp_solve/liblp_solve.a
+$(ARPACK): /usr/lib/x86_64-linux-gnu/libarpack.so
+$(lapack): Rproj_externals/libopenblas.a
 
 Rproj_externals/lp_solve/liblp_solve.a:
 	@(cd Rproj_externals/lp_solve && $(MAKE) liblp_solve.a \

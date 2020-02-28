@@ -212,8 +212,8 @@ sample_points <- function(P = NULL, N = NULL, distribution = NULL, random_walk =
 }
 
 #' @export
-HMC <- function(SP = NULL, file = NULL, objectiveFunction = NULL, N = NULL, walk_length = NULL, Temperature = NULL, Diameter = NULL) {
-    .Call(`_volesti_HMC`, SP, file, objectiveFunction, N, walk_length, Temperature, Diameter)
+HMC <- function(spectrahedronInputFile = NULL, random_Walk = NULL, N = NULL, walk_length = NULL, parameters = NULL) {
+    .Call(`_volesti_HMC`, spectrahedronInputFile, random_Walk, N, walk_length, parameters)
 }
 
 #' The main function for volume approximation of a convex Polytope (H-polytope, V-polytope or a zonotope)
