@@ -155,7 +155,7 @@ public:
         //retrieve result and invert to get required eigenvalue of the original problem
         if (eigs.info() != Spectra::SUCCESSFUL) {
             eigenvector.setZero(A.rows());
-            return NT(O);
+            return NT(0);
         }
 
         lambdaMinPositive = 1/((eigs.eigenvalues())(0).real());
