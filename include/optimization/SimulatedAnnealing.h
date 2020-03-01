@@ -5,6 +5,7 @@
 #ifndef VOLESTI_SIMULATEDANNEALING_H
 #define VOLESTI_SIMULATEDANNEALING_H
 
+#include "SlidingWindow.h"
 
 /// Simulated Annealing algorithm for the semidefinite program
 /// Minimize \[ c^T x \], s.t. LMI(x) <= 0
@@ -84,7 +85,7 @@ public:
 
         // Estimate the diameter of the spectrahedron
         // needed for the random walk
-        diameter = spectrahedron->estimateDiameter(spectrahedron->dimension()*4, *(this->interiorPoint));
+        diameter = spectrahedron->estimateDiameter(20 + std::sqrt(spectrahedron->dimension()), *(this->interiorPoint));
     }
 
 
@@ -102,8 +103,10 @@ public:
 
     /// Solves the semidefinite program
     /// \param[out] x The vector minimizing the objective function
+    /// \param[in] verbose True to print messages. Default is false
     /// \return The best approximation to the optimal solution
-    NT solve(Point& x) {
+    NT solve(Point& x, bool verbose = false) {
+        // initialize
         x = *interiorPoint;
         NT currentMin = objectiveFunction.dot(x);
         int stepsCount = 0;
@@ -113,18 +116,14 @@ public:
         // initialize random walk;
         HMC hmc;
         initializeHMC(hmc, diameter);
-        std::list<Point> randPoints;
 
         // if settings.maxNumSteps is negative there is no
         // bound to the number of steps
         while (stepsCount < settings.maxNumSteps || settings.maxNumSteps < 0) {
 
             // sample one point with current temperature
+            std::list<Point> randPoints;
             hmc.sample(*spectrahedron, x, 1, randPoints);
-
-            // decrease the temperature
-            temperature *= tempDecreaseFactor;
-            hmc.setTemperature(temperature);
 
             // update values;
             x = randPoints.front();
@@ -132,7 +131,64 @@ public:
             currentMin = objectiveFunction.dot(x);
             ++stepsCount;
 
-            std::cout << "Temperature: " << temperature << " Min: " << currentMin << "\n";
+            if (verbose)
+                std::cout << "Step: " << stepsCount << ", Temperature: " << temperature << ", Min: " << currentMin << "\n";
+
+            // decrease the temperature
+            temperature *= tempDecreaseFactor;
+            hmc.setTemperature(temperature);
+        }
+
+        // return the minimum w.r.t. the original objective function
+        return currentMin*objectiveFunctionNorm;
+    }
+
+    /// Solves the semidefinite program. Stops when reaches a relative error < settings.error
+    /// or hits the maximum number of allowed steps
+    /// \param[out] x The vector minimizing the objective function
+    /// \param[in] verbose True to print messages
+    /// \param[in] The exact minimum of the problem
+    /// \return The best approximation to the optimal solution
+    NT solve(Point& x, bool verbose, const NT exact) {
+        // initialize
+        x = *interiorPoint;
+        NT currentMin = objectiveFunction.dot(x);
+        int stepsCount = 0;
+        NT temperature = diameter;
+        NT tempDecreaseFactor = 1.0 - static_cast<NT>(1.0 / std::pow(spectrahedron->dimension(), settings.k));
+
+        // initialize random walk;
+        HMC hmc;
+        initializeHMC(hmc, diameter);
+
+        // if settings.maxNumSteps is negative there is no
+        // bound to the number of steps
+        while (stepsCount < settings.maxNumSteps || settings.maxNumSteps < 0) {
+
+            // sample one point with current temperature
+            std::list<Point> randPoints;
+            hmc.sample(*spectrahedron, x, 1, randPoints);
+
+            // update values;
+            x = randPoints.front();
+            randPoints.clear();
+            currentMin = objectiveFunction.dot(x);
+            ++stepsCount;
+
+            // compute relative error
+            NT relError = relativeError(currentMin, exact);
+
+            if (verbose)
+                std::cout << "Step: " << stepsCount << ", Temperature: " << temperature << ", Min: " << currentMin
+                << ", Relative error: " << relError << "\n";
+
+            // check if we reached desired accuracy
+            if (relError < settings.error)
+                break;
+
+            // decrease the temperature
+            temperature *= tempDecreaseFactor;
+            hmc.setTemperature(temperature);
         }
 
         // return the minimum w.r.t. the original objective function

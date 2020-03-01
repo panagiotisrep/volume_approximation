@@ -7,10 +7,12 @@
 
 
 /// Computes the relative error
+/// \tparam NT Numeric type
 /// \param[in] approx The approximated value
 /// \param[in] exact The exact value
 /// \return The relative error
-double relativeError(double approx, double exact) {
+template <typename NT>
+NT relativeError(NT approx, NT exact) {
     return std::fabs((exact - approx) / exact);
 }
 
@@ -31,25 +33,25 @@ public:
     /// Constructor
     /// \param[in] windowSize The size of the window
     SlidingWindow(int windowSize) : windowSize(windowSize) {
-        count = 0;
+        numEntries = 0;
     }
 
     /// Adds an approximation in the window
     /// \param[in] approximation The new approximation
     void push(NT approximation) {
         // if window is full, remove the oldest value
-        if (count >= windowSize) {
+        if (numEntries >= windowSize) {
             approximations.pop_back();
         }
         else
-            count++;
+            numEntries++;
 
         approximation.push_front(approximation);
     }
 
     /// \return The relative error between the youngest and oldest approximations
     double getRelativeError() {
-        if (count < windowSize)
+        if (numEntries < windowSize)
             return 1;
 
         return relativeError(approximations.back(), approximations.front());

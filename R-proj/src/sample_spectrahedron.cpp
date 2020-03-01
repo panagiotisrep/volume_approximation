@@ -196,7 +196,7 @@ Rcpp::NumericMatrix HMC(Rcpp::Nullable<Rcpp::CharacterVector> spectrahedronInput
 
 //' @export
 // [[Rcpp::export]]
-Rcpp::NumericMatrix solveSDP(Rcpp::Nullable<Rcpp::CharacterVector> spectrahedronInputFile = R_NilValue,
+Rcpp::List solveSDP(Rcpp::Nullable<Rcpp::CharacterVector> spectrahedronInputFile = R_NilValue,
                         Rcpp::Nullable<Rcpp::List> parameters = R_NilValue) {
 
     typedef double NT;
@@ -222,7 +222,17 @@ Rcpp::NumericMatrix solveSDP(Rcpp::Nullable<Rcpp::CharacterVector> spectrahedron
     SA simulatedAnnealing(&spectrahedron, Point(objectiveFunction), settings);
 
     Point x;
-    simulatedAnnealing.solve(x);
+    NT min;
 
-    return Rcpp::wrap(x.getCoefficients());
+    if (Rcpp::as<Rcpp::List>(parameters).containsElementNamed("exact")) {
+        // keep running the algorithm till you reach desired relative error
+        NT exact = Rcpp::as<NT>(Rcpp::as<Rcpp::List>(parameters)["exact"]);
+        min = simulatedAnnealing.solve(x, true, exact);
+    }
+    else
+        // run the algorithm for a set number of iterations
+        min = simulatedAnnealing.solve(x, true);
+
+    return Rcpp::List::create(Rcpp::Named("min") = min,
+                              Rcpp::Named("minimizer") = Rcpp::wrap(x.getCoefficients()));
 }
