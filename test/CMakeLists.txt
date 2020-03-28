@@ -318,13 +318,101 @@ else ()
       set (SSPARSE_LIBS ${SSPARSE_LIBS} -lrt)
     endif()
 
-
   endif()
+
   add_library(arpackpp INTERFACE)
+
+  ## Try to set SLEPC_DIR ##
+  ##########################
+  if(NOT DEFINED SLEPC_DIR)
+    set(SLEPC_DIR /home/panagiotis/slepc-3.12.2)
+    set(PETSC_ARCH arch-linux2-c-debug)
+    message(STATUS SLEPC_DIR- ${SLEPC_DIR})
+    message(STATUS PETSC_ARCH- ${PETSC_ARCH})
+  endif()
+
+  ## Includes ##
+  ##############
+  if(EXISTS "${SLEPC_DIR}/include" AND
+          EXISTS "${SLEPC_DIR}/${PETSC_ARCH}/include")
+    set(SLEPC_INC "${SLEPC_DIR}/include" "${SLEPC_DIR}/arch-linux2-c-debug/include")
+  else()
+    message(SEND_ERROR "SLEPc includes not found")
+  endif()
+
+  ## Library ##
+  #############
+  if(EXISTS "${SLEPC_DIR}/${PETSC_ARCH}/lib/libslepc.so")
+    set(SLEPC_LIB "${SLEPC_DIR}/${PETSC_ARCH}/lib/libslepc.so")
+  elseif(EXISTS "${SLEPC_DIR}/${PETSC_ARCH}/lib/libslepc.a")
+    set(SLEPC_LIB "${SLEPC_DIR}/${PETSC_ARCH}/lib/libslepc.a")
+  elseif(EXISTS "${SLEPC_DIR}/${PETSC_ARCH}/lib/libslepc.dylib")
+    set(SLEPC_LIB "${SLEPC_DIR}/${PETSC_ARCH}/lib/libslepc.dylib")
+  else()
+    message(SEND_ERROR "SLEPc library not found")
+  endif()
+
+  ## CMake check and done ##
+  ##########################
+  include(FindPackageHandleStandardArgs)
+  find_package_handle_standard_args(SLEPc
+          "SLEPc could not be found: be sure to set SLEPC_DIR in your environment variables"
+          SLEPC_LIB SLEPC_INC SLEPC_DIR)
+
+
+
+  ## Try to set PETSC_DIR ##
+  ##########################
+  if(NOT DEFINED PETSC_DIR)
+    set(PETSC_DIR /home/panagiotis/petsc-3.12.4)
+    message(STATUS PETSC_DIR- ${PETSC_DIR})
+  endif()
+
+  if(EXISTS "${PETSC_DIR}/include" AND
+          EXISTS "${PETSC_DIR}/${PETSC_ARCH}/include")
+    set(PETSC_INC "${PETSC_DIR}/include" "${PETSC_DIR}/arch-linux2-c-debug/include")
+  else()
+    message(SEND_ERROR "PETSC includes not found")
+  endif()
+
+  ## Library ##
+  #############
+  if(EXISTS "${PETSC_DIR}/${PETSC_ARCH}/lib/libpetsc.so")
+    set(PETSC_LIB "${PETSC_DIR}/${PETSC_ARCH}/lib/libpetsc.so")
+  else()
+    message(SEND_ERROR "SLEPc library not found")
+  endif()
+
+  ## CMake check and done ##
+  ##########################
+  find_package_handle_standard_args(PETSC
+          "PETSC could not be found: be sure to set PETSC_LIB in your environment variables"
+          PETSC_LIB PETSC_INC PETSC_DIR)
+
+
+  include_directories(${SLEPC_INC})
+  include_directories(${PETSC_DIR})
+  include_directories(${SLEPC_DIR}/lib/slepc/conf/slepc_common)
+  include_directories(${PETSC_DIR}/lib/slepc/conf/slepcvariables)
+  include_directories(${PETSC_DIR}/${PETSC_ARCH}/lib/slepc/conf/slepcvariables)
+  include_directories(${PETSC_DIR}/lib/slepc/conf/slepcvariables)
+  include_directories("${SLEPC_DIR}/include")
+  include_directories("${SLEPC_DIR}/arch-linux2-c-debug/include")
+
+  include_directories(/home/panagiotis/petsc-3.12.4/include)
+  include_directories(/home/panagiotis/petsc-3.12.4/arch-linux2-c-debug//include)
+
+  find_package(MPI)
+  include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+
   TARGET_LINK_LIBRARIES(HMC ${INTERFACE})
   TARGET_LINK_LIBRARIES(HMC ${LAPACK_LIBRARIES})
   TARGET_LINK_LIBRARIES(HMC ${ARPACK_LIB})
   target_include_directories(arpackpp INTERFACE include)
+  TARGET_LINK_LIBRARIES(HMC ${SLEPC_LIB})
+  TARGET_LINK_LIBRARIES(HMC ${PETSC_LIB})
+  TARGET_LINK_LIBRARIES(HMC ${MPI_C_LIBRARIES})
+
 
   TARGET_LINK_LIBRARIES(vol ${LP_SOLVE})
   #TARGET_LINK_LIBRARIES(volume ${LP_SOLVE})
