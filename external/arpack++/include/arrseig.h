@@ -843,8 +843,6 @@ DefineParameters(int np, int nevp, const std::string& whichp, int ncvp,
     tol       = tolp;
     resid     = residp;
     AutoShift = ishiftp;
-    nev = 1;
-    maxitp=10000;
   }
 
   // Returning from here if an error has occurred.

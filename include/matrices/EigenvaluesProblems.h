@@ -178,10 +178,17 @@ public:
         // Creating an eigenvalue problem and defining what we need:
         // the  eigenvector of A with largest real.
         ARNonSymStdEig<NT, DenseProductMatrix<NT> >
-        dprob(A.cols(), 3, &M, &DenseProductMatrix<NT>::MultMv, std::string ("LR"));
+
+        dprob(A.cols(), 1, &M, &DenseProductMatrix<NT>::MultMv, std::string ("LR"), 8, 0.0);//, 100*5);
 
         // compute
-        dprob.FindEigenvectors();
+        if (dprob.FindEigenvectors() == 0) {
+            std::cout << "Failed\n";
+            // if failed with default (and fast) parameters, try with stable (and slow)
+            dprob.ChangeNcv(A.cols()/10);
+            if (dprob.FindEigenvectors() == 0) std::cout << "\tFailed Again\n";
+        }
+
 
         // allocate memory for the eigenvector here
         eigenvector.setZero(A.rows());

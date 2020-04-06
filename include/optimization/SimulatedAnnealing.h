@@ -126,7 +126,7 @@ public:
             hmc.sample(*spectrahedron, x, 1, randPoints);
 
             // update values;
-            x = randPoints.front();
+            x = randPoints.back();
             randPoints.clear();
             currentMin = objectiveFunction.dot(x);
             ++stepsCount;
@@ -167,10 +167,10 @@ public:
 
             // sample one point with current temperature
             std::list<Point> randPoints;
-            hmc.sample(*spectrahedron, x, 1, randPoints);
+            hmc.sample(*spectrahedron, x, settings.walkLength, randPoints);
 
             // update values;
-            x = randPoints.front();
+            x = randPoints.back();
             randPoints.clear();
             currentMin = objectiveFunction.dot(x);
             ++stepsCount;
