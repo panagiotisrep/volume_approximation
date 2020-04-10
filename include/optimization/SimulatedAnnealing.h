@@ -160,6 +160,7 @@ public:
         // initialize random walk;
         HMC hmc;
         initializeHMC(hmc, diameter);
+        typename HMC::PrecomputedValues hmcPrecomputesValues;
 
         // if settings.maxNumSteps is negative there is no
         // bound to the number of steps
@@ -167,11 +168,25 @@ public:
 
             // sample one point with current temperature
             std::list<Point> randPoints;
-            hmc.sample(*spectrahedron, x, settings.walkLength, randPoints);
 
-            // update values;
-            x = randPoints.back();
-            randPoints.clear();
+            while (1) {
+                hmc.sample(*spectrahedron, x, settings.walkLength, randPoints, hmcPrecomputesValues);
+
+                // if the sampled point is not inside the spectrahedron,
+                // get a new one
+                if (spectrahedron->isExterior(hmcPrecomputesValues.C)) {
+                    if (verbose) std::cout << "Sampled point outside the spectrahedron.\n";
+                    randPoints.clear();
+                    hmcPrecomputesValues.resetFlags();
+                }
+                else {
+                    // update values;
+                    x = randPoints.back();
+                    randPoints.clear();
+                    break;
+                }
+            }
+
             currentMin = objectiveFunction.dot(x);
             ++stepsCount;
 

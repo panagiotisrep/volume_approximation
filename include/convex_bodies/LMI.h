@@ -5,6 +5,8 @@
 #ifndef VOLESTI_LMI_H
 #define VOLESTI_LMI_H
 
+#include "../matrices/EigenvaluesProblems.h"
+
 /// This class handles a linear matrix inequality of the form \[A_0 +  \sum x_i A_i <= 0\],
 /// where <= denotes negative definiteness
 /// @tparam NT Numeric Type
@@ -151,7 +153,7 @@ class LMI<NT, Eigen::Matrix<NT,Eigen::Dynamic,Eigen::Dynamic>, Eigen::Matrix<NT,
     /// Evaluate A_0 + \[A_0 + \sum x_i A_i \]
     /// \param[in] x The input vector
     /// \param[out] ret The output matrix
-    void evaluate(VT const & x, MT& ret) {
+    void evaluate(VT const & x, MT& ret) const {
         evaluateWithoutA0(x, ret);
 
         // add A0
@@ -161,7 +163,7 @@ class LMI<NT, Eigen::Matrix<NT,Eigen::Dynamic,Eigen::Dynamic>, Eigen::Matrix<NT,
     /// Compute  \[x_1*A_1 + ... + x_n A_n]
     /// \param[in] x Input vector
     /// \param[out] res Output matrix
-    void evaluateWithoutA0(const VT& x, MT& res)  {
+    void evaluateWithoutA0(const VT& x, MT& res)  const {
 //#define EVALUATE_WITHOUT_A0_NAIVE
 #if defined(EVALUATE_WITHOUT_A0_NAIVE)
         res = MT::Zero(m, m);
@@ -225,6 +227,26 @@ class LMI<NT, Eigen::Matrix<NT,Eigen::Dynamic,Eigen::Dynamic>, Eigen::Matrix<NT,
     MT* const getMatrix(const int i) {
         return &(matrices[i]);
     }
+
+
+    /// check if the matrix is negative semidefinite
+    /// \param matrix a matrix
+    /// \return Pointer to A_i
+    bool isNegativeSemidefinite(MT const & matrix ) const {
+        EigenvaluesProblems<NT, MT, VT> eigs;
+        NT eival = eigs.findSymEigenvalue(matrix);
+        return eival <= 0;
+    }
+
+    /// evaluate LMI(pos) and check if its negative semidefinite
+    /// \param pos a vector of our current position
+    /// \return true is LMI(pos) is negative semidefinite
+    bool isNegativeSemidefinite(VT const & pos) const {
+        MT mat;
+        evaluate(pos, mat);
+        return isNegativeSemidefinite(mat);
+    }
+
 };
 
 #endif //VOLESTI_LMI_H

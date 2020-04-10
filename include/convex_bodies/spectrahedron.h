@@ -218,6 +218,20 @@ public:
 
         return maxDistance;
     }
+
+    /// Find out is lmi(current position) = mat is in the exterior of the spectrahedron
+    /// \param mat a matrix where mat = lmi(current position)
+    /// \return true if position is outside the spectrahedron
+    bool isExterior(MT const & mat) {
+        return !lmi.isNegativeSemidefinite(mat);
+    }
+
+    /// Find out is pos is in the exterior of the spectrahedron
+    /// \param pos a vector
+    /// \return true if pos is outside the spectrahedron
+    bool isExterior(VT const & pos) {
+        return !lmi.isNegativeSemidefinite(pos);
+    }
 };
 
 #endif //VOLESTI_SPECTRAHEDRON_H

@@ -97,6 +97,35 @@ public:
         precomputedValues.resetFlags();
     }
 
+    /// Samples random points from the spectrahedron from the Boltzmann distribution
+    /// \param[in] spectrahedron A spectrahedron
+    /// \param[in] interiorPoint A point in the interior of the spectrahedron
+    /// \param[in] pointsNum The number of points to sample
+    /// \param[out] points The list of the sampled points
+    /// \param[in, out] precomputedValues transfer data between sucessive calls
+    void sample(SPECTRAHEDRON& spectrahedron, const Point& interiorPoint, const unsigned int pointsNum,
+            std::list<Point>& points, PrecomputedValues& precomputedValues) {
+        // store intermediate results between successive calls of methods
+        // of the class spectrahedron, to avoid repeating computations
+
+        VT p = interiorPoint.getCoefficients();
+
+        // sample #pointsNum points
+        for (unsigned int i = 1; i <= pointsNum; ++i) {
+            // burn #walk_length points to get one sample
+            for (unsigned int j = 0; j < settings.walk_length; ++j) {
+                getNextPoint(spectrahedron, p, precomputedValues);
+            }
+
+            // add the sample in the return list
+            points.push_back(Point(p));
+        }
+
+        // the data in preComputedValues may be out of date in the next call
+        precomputedValues.resetFlags();
+        precomputedValues.computed_C = true;
+    }
+
 
     /// A single step of the HMC random walk: choose a direction and walk on the trajectory for a random distance.
     /// If it hits the boundary, the trajectory is reflected. If #reflections < reflectionsBound * dimension, it returns the same point

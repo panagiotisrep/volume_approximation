@@ -80,11 +80,11 @@ int main(int argc, char* argv[]) {
 
 #endif
 
-    SA::Settings settings(0.001, 1,15,0.35);
+    SA::Settings settings(0.001, 1,25,0.25);
     SA simulatedAnnealing(&spectrahedron, Point(c), settings);
 
     Point x;
-    NT min = simulatedAnnealing.solve(x);
+    NT min = simulatedAnnealing.solve(x,true,-0.97226);
 
     std::cout << min << "\n";// << x.getCoefficients().transpose() << "\n";
     return 0;

@@ -13,7 +13,10 @@
 /// ARPACK++ standard eigenvalues solver
 #define ARPACK_EIGENVALUES_SOLVER
 
+#include <../../external/arpack++/include/arssym.h>
+#include <../../external/Spectra/include/Spectra/SymEigsSolver.h>
 #include "DenseProductMatrix.h"
+#include "EigenDenseMatrix.h"
 
 #include "../../external/Spectra/include/Spectra/SymGEigsSolver.h"
 #include "../../external/Spectra/include/Spectra/GenEigsSolver.h"
@@ -48,6 +51,68 @@ public:
     /// The type of a pair of NT
     typedef std::pair<NT, NT> NTpair;
 
+
+    /// Find the smallest eigenvalue of M
+    /// \param M a symmetric matrix
+    /// \return smallest eigenvalue
+    NT findSymEigenvalue(MT const & M) {
+        EigenDenseMatrix<NT> _M(&M);
+
+//#define NOT_WORKING
+#ifdef NOT_WORKING
+        // Creating an eigenvalue problem and defining what we need:
+        // the smallest eigenvalue of M.
+        ARNonSymStdEig<NT, EigenDenseMatrix<NT> >
+                dprob(M.cols(), 1, &_M, &EigenDenseMatrix<NT>::MultMv, std::string ("LR"), 8, 0.0, 100*15);
+
+        // compute
+        if (dprob.FindEigenvectors() == 0) {
+            std::cout << "Failed in findSymEigenvalue\n";
+            // if failed with default (and fast) parameters, try with stable (and slow)
+            dprob.ChangeNcv(M.cols()/10);
+            if (dprob.FindEigenvectors() == 0) {
+                std::cout << "\tFailed Again\n";
+                return NT(0);
+            }
+        }
+
+        if (!dprob.EigenvaluesFound()) {
+            // if failed to find eigenvalues
+            return NT(0);
+        }
+
+        // retrieve eigenvalue of the original system
+        return dprob.EigenvalueReal(0);
+#elif defined(SPECTRA)
+        // This parameter is for Spectra. It must be larger than #(requested eigenvalues) + 2
+        // and smaller than the size of matrix;
+        int ncv = M.cols()/10 + 5;
+        if (ncv > M.cols()) ncv = M.cols();
+
+        Spectra::SymEigsSolver<NT, Spectra::LARGEST_ALGE, EigenDenseMatrix<NT> > eigs(&_M, 1, ncv);
+        // compute
+        eigs.init();
+        eigs.compute(50000);
+        if(eigs.info() == Spectra::SUCCESSFUL) {
+            return eigs.eigenvalues()(0);
+        }
+        else {
+            std::cout << "Spectra failed\n";
+            return NT(0);
+        }
+#else
+        Eigen::SelfAdjointEigenSolver<MT> solver;
+        solver.compute(M, Eigen::EigenvaluesOnly);
+//        typename Eigen::GeneralizedEigenSolver<MT>::ComplexVectorType eivals = solver.eigenvalues();
+//        NT max = eivals(0).real();
+//
+//        for (int i = 1; i < eivals.rows(); i++)
+//            if (eivals(i).real() > max)
+//                max = eivals(i).real();
+
+        return solver.eigenvalues().maxCoeff();
+#endif
+    }
 
     /// Find the minimum positive and maximum negative eigenvalues of the generalized eigenvalue
     /// problem A + lB, where A, B symmetric and A negative definite.
@@ -179,14 +244,17 @@ public:
         // the  eigenvector of A with largest real.
         ARNonSymStdEig<NT, DenseProductMatrix<NT> >
 
-        dprob(A.cols(), 1, &M, &DenseProductMatrix<NT>::MultMv, std::string ("LR"), 8, 0.0);//, 100*5);
+        dprob(A.cols(), 1, &M, &DenseProductMatrix<NT>::MultMv, std::string ("LR"), 8, 0.000);//, 100*3);
 
         // compute
         if (dprob.FindEigenvectors() == 0) {
             std::cout << "Failed\n";
             // if failed with default (and fast) parameters, try with stable (and slow)
             dprob.ChangeNcv(A.cols()/10);
-            if (dprob.FindEigenvectors() == 0) std::cout << "\tFailed Again\n";
+            if (dprob.FindEigenvectors() == 0) {
+                std::cout << "\tFailed Again\n";
+                return NT(0);
+            }
         }
 
 
