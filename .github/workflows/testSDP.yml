@@ -14,15 +14,15 @@ jobs:
       - uses: actions/checkout@v1
       - run: sudo apt-get update || true;
              sudo apt-get install ${{ matrix.compilers }} lp-solve; 
-             sudo apt install gfortran
+             sudo apt install gfortran;
              rm -rf buildSDP;
              mkdir buildSDP; 
              cd buildSDP;
-             git clone https://github.com/m-reuter/arpackpp
-             cd arpackcpp
-             ./install-openblas.sh
-             ./install-arpack-ng.sh
-             cp -r external ../
-             cd ../
+             git clone https://github.com/m-reuter/arpackpp;
+             cd arpackcpp;
+             ./install-openblas.sh;
+             ./install-arpack-ng.sh;
+             cp -r external ../;
+             cd ../;
              cmake -D CMAKE_CXX_COMPILER=${{ matrix.compilers }} ../test/SDP;
              make;
