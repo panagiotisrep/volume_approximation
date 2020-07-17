@@ -14,11 +14,11 @@ jobs:
       - uses: actions/checkout@v1
       - run: sudo apt-get update || true;
              sudo apt-get install ${{ matrix.compilers }} lp-solve; 
-             sudo apt install gfortran;
+             sudo apt install gfortran-8;
              sudo apt install git;
              git clone https://github.com/m-reuter/arpackpp;
              cd arpackpp;
-             ./install-openblas.sh;
+             
              ./install-arpack-ng.sh;
              cp -r external ../test/SDP;
              cd ../;
