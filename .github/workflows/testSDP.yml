@@ -15,6 +15,7 @@ jobs:
       - run: sudo apt-get update || true;
              sudo apt-get install ${{ matrix.compilers }} lp-solve; 
              sudo apt install gfortran;
+             sudo apt install git;
              git clone https://github.com/m-reuter/arpackpp;
              ./install-openblas.sh;
              ./install-arpack-ng.sh;
