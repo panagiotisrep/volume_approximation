@@ -16,9 +16,10 @@ jobs:
              sudo apt-get install ${{ matrix.compilers }} lp-solve; 
              sudo apt install gfortran;
              sudo apt install git;
+             sudo apt install libpthread-stubs0-dev;
              git clone https://github.com/m-reuter/arpackpp;
              cd arpackpp;
-             
+             ./install-openblas.sh;
              ./install-arpack-ng.sh;
              cp -r external ../test/SDP;
              cd ../;
