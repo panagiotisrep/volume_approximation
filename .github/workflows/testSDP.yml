@@ -19,6 +19,7 @@ jobs:
              mkdir buildSDP; 
              cd buildSDP;
              git clone https://github.com/m-reuter/arpackpp;
+             ls;
              cd arpackcpp;
              ./install-openblas.sh;
              ./install-arpack-ng.sh;
