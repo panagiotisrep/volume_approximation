@@ -27,7 +27,7 @@
 
 
 typedef std::string::iterator string_it;
-typedef std::list<double> listVector;
+typedef std::vector<double> listVector;
 
 
 char consumeSymbol(string_it &at, string_it &end) {
@@ -204,6 +204,97 @@ void loadSDPAFormatFile(std::istream &is, LMII &lmi, VT &objectiveFunction) {
     lmi = LMII(matrices);
 }
 
+
+template <typename MT, typename LMII, typename VT>
+void loadSparseSDPAFormatFile(std::istream &is, LMII &lmi, VT &objectiveFunction) {
+    std::string line;
+    std::string::size_type sz;
+
+    std::getline(is, line, '\n');
+
+    //skip comments
+    while (isCommentLine(line)) {
+        std::getline(is, line, '\n');
+    }
+
+    //read variables number
+    int variablesNum = fetchNumber(line);
+
+    if (std::getline(is, line, '\n').eof())
+        throw std::runtime_error("Unexpected end of file");
+
+    //read number of blocks
+    int blocksNum = fetchNumber(line);
+
+    if (std::getline(is, line, '\n').eof())
+        throw std::runtime_error("Unexpected end of file");
+
+    //read block structure vector
+    listVector blockSizes = readVector(line);
+
+    if (blockSizes.size() != blocksNum)
+        throw std::runtime_error("Wrong number of blocks");
+
+    if (std::getline(is, line, '\n').eof())
+        throw std::runtime_error("Unexpected end of file");
+
+    //read objective function
+    listVector constantVector = readVector(line);
+
+    while (constantVector.size() < variablesNum) {
+        if (std::getline(is, line, '\n').eof())
+            throw std::runtime_error("Unexpected end of file");
+
+        listVector t = readVector(line);
+        constantVector.insert(std::end(constantVector), std::begin(t), std::end(t));
+    }
+
+    std::vector<MT> matrices = std::vector<MT>(variablesNum + 1);
+    int matrixDim = 0;
+    for (auto x : blockSizes)
+        matrixDim += std::abs((int) x);
+
+    for (int i=0 ; i<matrices.size() ; ++i)
+        matrices[i].setZero(matrixDim, matrixDim);
+
+    // read constraint matrices
+    // entries are of the form
+    // <matno> <blkno> <i> <j> <entry>
+    while (!std::getline(is, line, '\n').eof()) {
+        listVector t = readVector(line);
+//            std::cout << line << "\n";
+
+        int blockOffset = 0;
+        for (int i=1; i<t[1] ; ++i)
+            blockOffset += std::abs(blockSizes[i-1]);
+
+        int i = t[2] + blockOffset-1;
+        int j = t[3] + blockOffset-1;
+
+        matrices[t[0]](i,j) = t[4];
+//            std::cout << i << " " << j << "\n";
+        // matrix is symmetric
+        // only upper triangular is provided
+        // fill lower triangular
+        if (i!=j)
+            matrices[t[0]](j,i) = t[4];
+    }
+
+    for (int atMatrix=1 ; atMatrix<matrices.size() ; atMatrix++) {
+        //the LMI in SDPA format is >0, I want it <0
+        //F0 has - before it in SDPA format, the rest have +
+        matrices[atMatrix] *= -1;
+    }
+
+    // return lmi and objective function
+    objectiveFunction.setZero(variablesNum);
+    int at = 0;
+
+    for (auto value : constantVector)
+        objectiveFunction(at++) = value;
+
+    lmi = LMII(matrices);
+}
 
 
 //' @export

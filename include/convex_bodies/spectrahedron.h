@@ -31,6 +31,7 @@
  */
 template <class TMT, class TVT>
 class LMI {
+public:
 
     TMT A0;
 
@@ -42,7 +43,7 @@ class LMI {
     TVT a;
     typedef typename std::vector<TMT>::iterator Iter;
 
-public:
+
 
   typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MT_ROWMAJOR;
     typedef TMT MT;
@@ -56,7 +57,7 @@ public:
             this->matrices.push_back(matrices[i]);
         }
 
-        setGradientMatrix();
+//        setGradientMatrix();
         setVectorMatrix();
     }
 
@@ -64,7 +65,7 @@ public:
         this->A0 = lmi.A0;
         this->matrices = lmi.matrices;
         setVectorMatrix();
-        setGradientMatrix();
+//        setGradientMatrix();
     }
 
     void set_Ai(const MT &Ai, const int i) {
@@ -1093,29 +1094,23 @@ public:
 
     //template<class Point>
     void compute_reflection(const Point &genEivector, Point &direction, const Point &p) {
+        VT grad;
+        int d = lmi.matrices.size();
+        grad.resize(d);
 
-//        auto t1 = std::chrono::steady_clock::now();
-
-//        const std::vector<MT> &matrices = lmi.getMatrices();
-        int d = getLMI().getDim();
-        int m = lmi.getMatricesDim();
-        const VT& coeffs = genEivector.getCoefficients();
-
-        U.noalias() = lmi.getGradientMatrix() * coeffs;
-        Point gradient(d);
-
+        // i-th coordinate of the determinant is e^T * A_i * e
         for (int i = 0; i < d; i++) {
-//            gradient.set_coord(i, genEivector.dot(genEivector.matrix_left_product(matrices[i])));
-            gradient.set_coord(i, U.segment(i*m,m).dot(coeffs));
+            grad(i) = genEivector.getCoefficients().dot(lmi.matrices[i] * genEivector.getCoefficients());
         }
 
-//        gradient = -1 * gradient;
-        gradient.normalize();
+        grad.normalize();
 
-        gradient *= (-2.0 * direction.dot(gradient));
-        direction += gradient;
+        // compute reflected direction
+        // if v is original direction and s the surface normal,
+        // reflected direction = v - 2 <v,s>*s
 
-
+        double dot = 2 * direction.getCoefficients().dot(grad);
+        direction.add((-dot) * grad);
     }
 
     template <typename NT>
