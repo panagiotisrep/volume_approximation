@@ -137,7 +137,7 @@ void loadSparseSDPAFormatFile3(std::istream &is, LMII &lmi, VT &objectiveFunctio
     // <matno> <blkno> <i> <j> <entry>
     while (!std::getline(is, line, '\n').eof()) {
         listVector3 t = readVector3(line);
-            std::cout << line << "\n";
+//            std::cout << line << "\n";
         int blockOffset = 0;
         for (int i=1; i<t[1] ; ++i)
             blockOffset += std::abs(blockSizes[i-1]);
@@ -541,6 +541,7 @@ Rcpp::NumericMatrix sample_points_sparse(Rcpp::Nullable<Rcpp::CharacterVector> f
             spectaedro::BoundaryOracleBilliardSettings settings(SP.getLMI().getMatricesDim());
             settings.LMIatP = SP.getLMI().getA0();
 //            p = Point(n);
+            p.print();
             rand_point_generator_spec(SP, p, NN, walkL, randPoints, var, settings);
 
         } else if (Rcpp::as<std::string>(random_walk).compare(std::string("RDHR")) == 0) {

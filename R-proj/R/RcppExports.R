@@ -12,6 +12,11 @@ sample_points <- function(file = NULL, distribution = NULL, N = NULL, walk_lengt
 }
 
 #' @export
+sample_points_sparse <- function(file = NULL, distribution = NULL, N = NULL, walk_length = NULL, Temperature = NULL, random_walk = NULL, initial_point_file = NULL) {
+    .Call(`_volesti_sample_points_sparse`, file, distribution, N, walk_length, Temperature, random_walk, initial_point_file)
+}
+
+#' @export
 sdp_approx <- function(file = NULL, N = NULL, random_walk = NULL, walk_length = NULL) {
     .Call(`_volesti_sdp_approx`, file, N, random_walk, walk_length)
 }
